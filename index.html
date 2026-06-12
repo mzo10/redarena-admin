@@ -16,7 +16,7 @@ body { background: #f2f2f2; font-family: -apple-system, BlinkMacSystemFont, 'Hel
 .badge span { color: #fff; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; }
 
 .tabs { display: flex; background: #1a1a1a; padding: 0 16px 16px; gap: 8px; }
-.tab { flex: 1; padding: 11px 8px; text-align: center; font-size: 14px; font-weight: 600; border: none; border-radius: 10px; cursor: pointer; font-family: inherit; transition: background 0.2s; }
+.tab { flex: 1; padding: 11px 8px; text-align: center; font-size: 14px; font-weight: 600; border: none; border-radius: 10px; cursor: pointer; font-family: inherit; }
 .tab.active { background: #fff; color: #1a1a1a; }
 .tab.inactive { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.45); }
 
@@ -34,7 +34,7 @@ body { background: #f2f2f2; font-family: -apple-system, BlinkMacSystemFont, 'Hel
 .row-info .sublabel.low { color: #CC0000; font-weight: 600; }
 
 .stepper { display: flex; align-items: center; gap: 14px; }
-.sbtn { width: 38px; height: 38px; border-radius: 50%; border: none; font-size: 24px; font-weight: 400; cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1; transition: transform 0.1s; }
+.sbtn { width: 38px; height: 38px; border-radius: 50%; border: none; font-size: 24px; font-weight: 400; cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1; }
 .sbtn:active { transform: scale(0.9); }
 .sbtn.minus { background: #f0f0f0; color: #1a1a1a; }
 .sbtn.plus { background: #1a1a1a; color: #fff; }
@@ -55,6 +55,16 @@ body { background: #f2f2f2; font-family: -apple-system, BlinkMacSystemFont, 'Hel
 .caja-input:focus { border-color: #1a1a1a; background: #fff; }
 .caja-textarea { width: 100%; padding: 13px 16px; border: 1.5px solid #ebebeb; border-radius: 14px; font-size: 16px; color: #111; background: #f7f7f7; min-height: 80px; resize: none; font-family: inherit; outline: none; }
 .caja-textarea:focus { border-color: #1a1a1a; background: #fff; }
+
+.efectivo-card { background: #fff; margin: 10px 14px 0; border-radius: 20px; padding: 18px; border-left: 4px solid #1a1a1a; }
+.efectivo-card .card-title { margin-bottom: 12px; }
+.efectivo-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-top: 0.5px solid #f5f5f5; }
+.efectivo-row:first-of-type { border-top: none; padding-top: 0; }
+.efectivo-row .el { font-size: 14px; color: #888; }
+.efectivo-row .ev { font-size: 15px; font-weight: 600; color: #111; }
+.efectivo-total { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; padding-top: 10px; border-top: 1.5px solid #1a1a1a; }
+.efectivo-total .el { font-size: 15px; font-weight: 700; color: #1a1a1a; }
+.efectivo-total .ev { font-size: 20px; font-weight: 700; color: #1a1a1a; }
 
 .total-card { background: #1a1a1a; margin: 10px 14px 0; border-radius: 20px; padding: 18px; }
 .total-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
@@ -77,7 +87,7 @@ body { background: #f2f2f2; font-family: -apple-system, BlinkMacSystemFont, 'Hel
 .diff-row .dv { font-weight: 600; color: #111; }
 .diff-row .dv.red { color: #CC0000; }
 
-.btn-submit { display: block; width: calc(100% - 28px); margin: 12px 14px 0; padding: 17px; background: #CC0000; border: none; border-radius: 16px; font-size: 18px; font-weight: 700; color: #fff; cursor: pointer; font-family: inherit; transition: opacity 0.2s; }
+.btn-submit { display: block; width: calc(100% - 28px); margin: 12px 14px 0; padding: 17px; background: #CC0000; border: none; border-radius: 16px; font-size: 18px; font-weight: 700; color: #fff; cursor: pointer; font-family: inherit; }
 .btn-submit:active { opacity: 0.85; }
 .btn-submit:disabled { background: #ccc; cursor: not-allowed; }
 
@@ -105,7 +115,7 @@ body { background: #f2f2f2; font-family: -apple-system, BlinkMacSystemFont, 'Hel
 </div>
 
 <div id="panel-cierre" class="panel active">
-  <div id="cierre-content"><div class="loading">Cargando inventario...</div></div>
+  <div id="cierre-content"><div class="loading">Cargando...</div></div>
 </div>
 
 <div id="panel-entrada" class="panel">
@@ -113,7 +123,7 @@ body { background: #f2f2f2; font-family: -apple-system, BlinkMacSystemFont, 'Hel
 </div>
 
 <script>
-var SCRIPT_URL = "https://script.google.com/macros/s/AKfycby80D2TmSixMYbUgDQFBSY6TRi5xgKgZJR3fqpZaBlyblAZeiU0-Cs3muPMAXSR44avRA/exec";
+var SCRIPT_URL = "https://script.google.com/macros/s/AKfycbznZRssKYFtwGz-IyAhiFhe8k6i9dA37vSD_POFcJ-KyV1Rw85H8nFrQL1oC6l-gastYg/exec";
 
 var PRECIOS = { Gatorades:1400, Aguas:800, Snacks:350, Gaseosas:1000, Tes:1000, Helados:1000, Reservas:25000 };
 var productos = [
@@ -133,6 +143,9 @@ productos.forEach(function(p) {
 });
 
 var stock = {};
+var cajaBase = 0;
+var acumuladoEfectivo = 0;
+var totalEfectivoEsperado = 0;
 var gastoNum = 0;
 var gastosActivos = [];
 
@@ -169,6 +182,7 @@ function actualizarTodo() {
   var sinpeEl = document.getElementById("totalSinpe");
   var efEl = document.getElementById("efectivoCaja");
   if (!sinpeEl) return;
+
   var sinpe = Number(sinpeEl.value)||0;
   var ef = Number(efEl.value)||0;
   var total = sinpe + ef;
@@ -207,7 +221,8 @@ function actualizarTodo() {
   }
 }
 
-function stepper(key, isLow) {
+function stepper(key, isLow, initVal) {
+  if (initVal !== undefined) valores[key] = initVal;
   return '<div class="stepper">' +
     '<button class="sbtn minus" onclick="cambiar(\''+key+'\',-1)">−</button>' +
     '<span class="sval'+(isLow?' low':'')+'" id="sval-'+key+'">'+(valores[key]||0)+'</span>' +
@@ -236,20 +251,28 @@ function renderCierre() {
     var s = stock[p.id]||0;
     var low = s <= 10;
     html +=
-      '<div class="row"' + (i===0?' style="border-top:none;padding-top:0"':'') + '>' +
-        '<div class="row-info">' +
-          '<div class="label'+(low?' low':'')+'">'+p.label+'</div>' +
-          '<div class="sublabel'+(low?' low':'')+'">'+( low?'Stock bajo: ':'En stock: ')+s+' · '+fmt(PRECIOS[p.id])+' c/u</div>' +
-        '</div>' +
-        stepper(p.id, low) +
+      '<div class="row"'+(i===0?' style="border-top:none;padding-top:0"':'')+'>'+
+        '<div class="row-info">'+
+          '<div class="label'+(low?' low':'')+'">'+p.label+'</div>'+
+          '<div class="sublabel'+(low?' low':'')+'">'+( low?'Stock bajo: ':'En stock: ')+s+' · '+fmt(PRECIOS[p.id])+' c/u</div>'+
+        '</div>'+
+        stepper(p.id, low)+
       '</div>';
   });
 
   html += '</div>' +
+
     '<div class="card">' +
       '<div class="card-title">GASTOS DEL DIA</div>' +
       '<div id="gastos-lista"></div>' +
       '<button class="btn-add" onclick="agregarGasto()">+ Agregar gasto</button>' +
+    '</div>' +
+
+    '<div class="efectivo-card">' +
+      '<div class="card-title">EFECTIVO EN CAJA</div>' +
+      '<div class="efectivo-row"><span class="el">Base inicio de mes</span><span class="ev">'+fmt(cajaBase)+'</span></div>' +
+      '<div class="efectivo-row"><span class="el">Acumulado del mes</span><span class="ev">'+fmt(acumuladoEfectivo)+'</span></div>' +
+      '<div class="efectivo-total"><span class="el">Total esperado en caja</span><span class="ev">'+fmt(totalEfectivoEsperado)+'</span></div>' +
     '</div>' +
 
     '<div class="card">' +
@@ -267,11 +290,10 @@ function renderCierre() {
 
   productos.forEach(function(p, i) {
     var invKey = "inv"+p.id;
-    valores[invKey] = stock[p.id]||0;
     html +=
-      '<div class="row"' + (i===0?' style="border-top:none;padding-top:0"':'') + '>' +
-        '<div class="row-info"><div class="label">'+p.label+'</div></div>' +
-        stepper(invKey, false) +
+      '<div class="row"'+(i===0?' style="border-top:none;padding-top:0"':'')+'>'+
+        '<div class="row-info"><div class="label">'+p.label+'</div></div>'+
+        stepper(invKey, false, stock[p.id]||0)+
       '</div>';
   });
 
@@ -289,11 +311,6 @@ function renderCierre() {
     '<button class="btn-submit" id="btn-enviar" onclick="enviarCierre()">Enviar cierre del dia</button>';
 
   document.getElementById("cierre-content").innerHTML = html;
-
-  productos.forEach(function(p) {
-    var el = document.getElementById("sval-inv"+p.id);
-    if (el) el.textContent = stock[p.id]||0;
-  });
 }
 
 function renderEntrada() {
@@ -301,9 +318,9 @@ function renderEntrada() {
   productos.forEach(function(p, i) {
     var entKey = "ent"+p.id;
     html +=
-      '<div class="row"' + (i===0?' style="border-top:none;padding-top:0"':'') + '>' +
-        '<div class="row-info"><div class="label">'+p.label+'</div></div>' +
-        stepper(entKey, false) +
+      '<div class="row"'+(i===0?' style="border-top:none;padding-top:0"':'')+'>'+
+        '<div class="row-info"><div class="label">'+p.label+'</div></div>'+
+        stepper(entKey, false)+
       '</div>';
   });
   html +=
@@ -379,24 +396,21 @@ function enviarCierre() {
     gastos: gastos
   };
 
-  fetch(SCRIPT_URL, {
-    method: "POST",
-    body: JSON.stringify(datos)
-  })
-  .then(function(r){ return r.json(); })
-  .then(function() {
-    document.getElementById("panel-cierre").innerHTML =
-      '<div class="success">' +
-        '<div class="success-icon">✓</div>' +
-        '<h2>Cierre enviado</h2>' +
-        '<p>El reporte del dia fue registrado correctamente.<br>Buenas noches.</p>' +
-      '</div>';
-  })
-  .catch(function(err) {
-    btn.disabled = false;
-    btn.textContent = "Enviar cierre del dia";
-    alert("Error al enviar. Intenta de nuevo.");
-  });
+  fetch(SCRIPT_URL, { method:"POST", body:JSON.stringify(datos) })
+    .then(function(r){ return r.json(); })
+    .then(function() {
+      document.getElementById("panel-cierre").innerHTML =
+        '<div class="success">' +
+          '<div class="success-icon">✓</div>' +
+          '<h2>Cierre enviado</h2>' +
+          '<p>El reporte del dia fue registrado correctamente.<br>Buenas noches.</p>' +
+        '</div>';
+    })
+    .catch(function() {
+      btn.disabled = false;
+      btn.textContent = "Enviar cierre del dia";
+      alert("Error al enviar. Intenta de nuevo.");
+    });
 }
 
 function enviarEntrada() {
@@ -411,29 +425,25 @@ function enviarEntrada() {
     notas: document.getElementById("entrada-notas") ? document.getElementById("entrada-notas").value : ""
   };
 
-  fetch(SCRIPT_URL, {
-    method: "POST",
-    body: JSON.stringify(datos)
-  })
-  .then(function(r){ return r.json(); })
-  .then(function() {
-    alert("Entrada registrada correctamente.");
-  })
-  .catch(function() {
-    alert("Error al registrar. Intenta de nuevo.");
-  });
+  fetch(SCRIPT_URL, { method:"POST", body:JSON.stringify(datos) })
+    .then(function(r){ return r.json(); })
+    .then(function() { alert("Entrada registrada correctamente."); })
+    .catch(function() { alert("Error al registrar. Intenta de nuevo."); });
 }
 
 fetch(SCRIPT_URL)
   .then(function(r){ return r.json(); })
-  .then(function(s) {
-    stock = s;
+  .then(function(data) {
+    stock = data.stock || {};
+    cajaBase = data.cajaBase || 0;
+    acumuladoEfectivo = data.acumuladoEfectivo || 0;
+    totalEfectivoEsperado = data.totalEfectivoEsperado || 0;
     renderCierre();
     renderEntrada();
   })
   .catch(function() {
     document.getElementById("cierre-content").innerHTML =
-      '<div class="loading">Error cargando inventario. Recarga la pagina.</div>';
+      '<div class="loading">Error cargando datos. Recarga la pagina.</div>';
   });
 </script>
 </body>
