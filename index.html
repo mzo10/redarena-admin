@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Red Arena | Cierre Diario</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body { background: #f2f2f2; font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif; padding-bottom: 60px; }
+
+.header { background: #1a1a1a; padding: 52px 18px 18px; display: flex; justify-content: space-between; align-items: flex-start; }
+.header-left .sub { color: rgba(255,255,255,0.45); font-size: 12px; margin-bottom: 2px; }
+.header-left h1 { color: #fff; font-size: 24px; font-weight: 700; }
+.header-left .fecha { color: rgba(255,255,255,0.4); font-size: 13px; margin-top: 4px; }
+.badge { background: #CC0000; border-radius: 8px; padding: 6px 12px; }
+.badge span { color: #fff; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; }
+
+.tabs { display: flex; background: #1a1a1a; padding: 0 16px 16px; gap: 8px; }
+.tab { flex: 1; padding: 11px 8px; text-align: center; font-size: 14px; font-weight: 600; border: none; border-radius: 10px; cursor: pointer; font-family: inherit; transition: background 0.2s; }
+.tab.active { background: #fff; color: #1a1a1a; }
+.tab.inactive { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.45); }
+
+.panel { display: none; }
+.panel.active { display: block; }
+
+.card { background: #fff; margin: 10px 14px 0; border-radius: 20px; padding: 18px; }
+.card-title { font-size: 11px; font-weight: 700; color: #1a1a1a; letter-spacing: 0.08em; margin-bottom: 16px; }
+
+.row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-top: 0.5px solid #f0f0f0; }
+.row:first-of-type { border-top: none; padding-top: 0; }
+.row-info .label { font-size: 16px; color: #111; font-weight: 400; }
+.row-info .label.low { color: #CC0000; }
+.row-info .sublabel { font-size: 11px; color: #bbb; margin-top: 2px; }
+.row-info .sublabel.low { color: #CC0000; font-weight: 600; }
+
+.stepper { display: flex; align-items: center; gap: 14px; }
+.sbtn { width: 38px; height: 38px; border-radius: 50%; border: none; font-size: 24px; font-weight: 400; cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1; transition: transform 0.1s; }
+.sbtn:active { transform: scale(0.9); }
+.sbtn.minus { background: #f0f0f0; color: #1a1a1a; }
+.sbtn.plus { background: #1a1a1a; color: #fff; }
+.sval { font-size: 22px; font-weight: 700; min-width: 30px; text-align: center; color: #111; }
+.sval.low { color: #CC0000; }
+
+.gasto-item { background: #f7f7f7; border-radius: 14px; padding: 14px; margin-bottom: 10px; }
+.gasto-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.gasto-num { font-size: 12px; font-weight: 700; color: #888; letter-spacing: 0.04em; }
+.btn-del { background: #ffecec; border: none; border-radius: 8px; padding: 5px 12px; font-size: 12px; color: #CC0000; font-weight: 700; cursor: pointer; font-family: inherit; }
+.gasto-field { width: 100%; padding: 12px 14px; border: 1.5px solid #e8e8e8; border-radius: 12px; font-size: 16px; color: #111; background: #fff; margin-bottom: 10px; font-family: inherit; -webkit-appearance: none; outline: none; }
+.gasto-field:focus { border-color: #1a1a1a; }
+.gasto-field:last-child { margin-bottom: 0; }
+.btn-add { display: block; width: 100%; padding: 14px; background: none; border: 1.5px dashed #ccc; border-radius: 14px; font-size: 15px; font-weight: 600; color: #999; cursor: pointer; margin-top: 6px; font-family: inherit; }
+
+.caja-label { font-size: 12px; color: #aaa; margin-bottom: 6px; font-weight: 500; }
+.caja-input { width: 100%; padding: 13px 16px; border: 1.5px solid #ebebeb; border-radius: 14px; font-size: 18px; font-weight: 600; color: #111; background: #f7f7f7; margin-bottom: 14px; font-family: inherit; -webkit-appearance: none; outline: none; }
+.caja-input:focus { border-color: #1a1a1a; background: #fff; }
+.caja-textarea { width: 100%; padding: 13px 16px; border: 1.5px solid #ebebeb; border-radius: 14px; font-size: 16px; color: #111; background: #f7f7f7; min-height: 80px; resize: none; font-family: inherit; outline: none; }
+.caja-textarea:focus { border-color: #1a1a1a; background: #fff; }
+
+.total-card { background: #1a1a1a; margin: 10px 14px 0; border-radius: 20px; padding: 18px; }
+.total-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.total-row .tl { font-size: 14px; color: rgba(255,255,255,0.5); }
+.total-row .tv { font-size: 16px; font-weight: 600; color: #fff; }
+.total-div { height: 0.5px; background: rgba(255,255,255,0.12); margin: 12px 0; }
+.total-final { display: flex; justify-content: space-between; align-items: center; }
+.total-final .tl { font-size: 15px; color: rgba(255,255,255,0.65); font-weight: 500; }
+.total-final .tv { font-size: 26px; font-weight: 700; color: #fff; }
+
+.diff-card { margin: 10px 14px 0; border-radius: 20px; padding: 18px; }
+.diff-ok { background: #f0faf2; border: 1.5px solid #4CAF50; }
+.diff-warn { background: #fff9f0; border: 1.5px solid #FF9800; }
+.diff-icon { font-size: 28px; margin-bottom: 8px; }
+.diff-title { font-size: 16px; font-weight: 700; margin-bottom: 10px; }
+.diff-title.ok { color: #2e7d32; }
+.diff-title.warn { color: #bf360c; }
+.diff-row { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 6px; }
+.diff-row .dl { color: #888; }
+.diff-row .dv { font-weight: 600; color: #111; }
+.diff-row .dv.red { color: #CC0000; }
+
+.btn-submit { display: block; width: calc(100% - 28px); margin: 12px 14px 0; padding: 17px; background: #CC0000; border: none; border-radius: 16px; font-size: 18px; font-weight: 700; color: #fff; cursor: pointer; font-family: inherit; transition: opacity 0.2s; }
+.btn-submit:active { opacity: 0.85; }
+.btn-submit:disabled { background: #ccc; cursor: not-allowed; }
+
+.loading { text-align: center; padding: 60px 20px; color: #999; font-size: 16px; }
+.success { text-align: center; padding: 80px 30px; }
+.success-icon { width: 72px; height: 72px; background: #f0faf2; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 36px; }
+.success h2 { font-size: 24px; font-weight: 700; color: #111; margin-bottom: 10px; }
+.success p { font-size: 15px; color: #888; line-height: 1.6; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div class="sub">Red Arena Futbol</div>
+    <h1>Cierre diario</h1>
+    <div class="fecha" id="fecha-txt"></div>
+  </div>
+  <div class="badge"><span>Admin</span></div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" id="tab-cierre" onclick="switchTab('cierre')">Cierre del dia</button>
+  <button class="tab inactive" id="tab-entrada" onclick="switchTab('entrada')">Mercaderia</button>
+</div>
+
+<div id="panel-cierre" class="panel active">
+  <div id="cierre-content"><div class="loading">Cargando inventario...</div></div>
+</div>
+
+<div id="panel-entrada" class="panel">
+  <div id="entrada-content"><div class="loading">Cargando...</div></div>
+</div>
+
+<script>
+var SCRIPT_URL = "https://script.google.com/macros/s/AKfycby80D2TmSixMYbUgDQFBSY6TRi5xgKgZJR3fqpZaBlyblAZeiU0-Cs3muPMAXSR44avRA/exec";
+
+var PRECIOS = { Gatorades:1400, Aguas:800, Snacks:350, Gaseosas:1000, Tes:1000, Helados:1000, Reservas:25000 };
+var productos = [
+  {id:"Gatorades", label:"Gatorades"},
+  {id:"Aguas", label:"Aguas"},
+  {id:"Snacks", label:"Snacks"},
+  {id:"Gaseosas", label:"Gaseosas"},
+  {id:"Tes", label:"Tes frios"},
+  {id:"Helados", label:"Helados"}
+];
+
+var valores = { reservasParticulares:0, sesionesADN:0 };
+productos.forEach(function(p) {
+  valores[p.id] = 0;
+  valores["inv"+p.id] = 0;
+  valores["ent"+p.id] = 0;
+});
+
+var stock = {};
+var gastoNum = 0;
+var gastosActivos = [];
+
+var dias = ["Domingo","Lunes","Martes","Miercoles","Jueves","Viernes","Sabado"];
+var meses = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+var hoy = new Date();
+document.getElementById("fecha-txt").textContent = dias[hoy.getDay()] + " " + hoy.getDate() + " de " + meses[hoy.getMonth()] + " " + hoy.getFullYear();
+
+function fmt(n) {
+  return "\u20a1" + Math.round(n).toLocaleString("es-CR");
+}
+
+function switchTab(tab) {
+  ["cierre","entrada"].forEach(function(t) {
+    document.getElementById("tab-"+t).className = t===tab ? "tab active" : "tab inactive";
+    document.getElementById("panel-"+t).className = t===tab ? "panel active" : "panel";
+  });
+}
+
+function cambiar(key, delta) {
+  valores[key] = Math.max(0, (valores[key]||0) + delta);
+  var el = document.getElementById("sval-"+key);
+  if (el) el.textContent = valores[key];
+  actualizarTodo();
+}
+
+function calcVentas() {
+  var t = valores.reservasParticulares * PRECIOS.Reservas;
+  productos.forEach(function(p) { t += (valores[p.id]||0) * PRECIOS[p.id]; });
+  return t;
+}
+
+function actualizarTodo() {
+  var sinpeEl = document.getElementById("totalSinpe");
+  var efEl = document.getElementById("efectivoCaja");
+  if (!sinpeEl) return;
+  var sinpe = Number(sinpeEl.value)||0;
+  var ef = Number(efEl.value)||0;
+  var total = sinpe + ef;
+  var esperado = calcVentas();
+  var diff = esperado - total;
+
+  var sd = document.getElementById("sinpe-display");
+  var ed = document.getElementById("ef-display");
+  var td = document.getElementById("total-display");
+  if (sd) sd.textContent = fmt(sinpe);
+  if (ed) ed.textContent = fmt(ef);
+  if (td) td.textContent = fmt(total);
+
+  var ds = document.getElementById("diff-section");
+  if (!ds) return;
+
+  if (esperado === 0 && total === 0) { ds.innerHTML = ""; return; }
+
+  if (Math.abs(diff) <= 100) {
+    ds.innerHTML =
+      '<div class="diff-card diff-ok">' +
+        '<div class="diff-icon">✅</div>' +
+        '<div class="diff-title ok">Todo cuadra</div>' +
+        '<div class="diff-row"><span class="dl">Ventas calculadas</span><span class="dv">'+fmt(esperado)+'</span></div>' +
+        '<div class="diff-row"><span class="dl">Total reportado</span><span class="dv">'+fmt(total)+'</span></div>' +
+      '</div>';
+  } else {
+    ds.innerHTML =
+      '<div class="diff-card diff-warn">' +
+        '<div class="diff-icon">⚠️</div>' +
+        '<div class="diff-title warn">Diferencia de '+fmt(Math.abs(diff))+'</div>' +
+        '<div class="diff-row"><span class="dl">Ventas calculadas</span><span class="dv">'+fmt(esperado)+'</span></div>' +
+        '<div class="diff-row"><span class="dl">Total reportado</span><span class="dv">'+fmt(total)+'</span></div>' +
+        '<div class="diff-row"><span class="dl">Diferencia</span><span class="dv red">'+fmt(diff)+'</span></div>' +
+      '</div>';
+  }
+}
+
+function stepper(key, isLow) {
+  return '<div class="stepper">' +
+    '<button class="sbtn minus" onclick="cambiar(\''+key+'\',-1)">−</button>' +
+    '<span class="sval'+(isLow?' low':'')+'" id="sval-'+key+'">'+(valores[key]||0)+'</span>' +
+    '<button class="sbtn plus" onclick="cambiar(\''+key+'\',1)">+</button>' +
+  '</div>';
+}
+
+function renderCierre() {
+  var html =
+    '<div class="card">' +
+      '<div class="card-title">RESERVAS DE HOY</div>' +
+      '<div class="row">' +
+        '<div class="row-info"><div class="label">Particulares</div><div class="sublabel">'+fmt(PRECIOS.Reservas)+' c/u</div></div>' +
+        stepper("reservasParticulares", false) +
+      '</div>' +
+      '<div class="row">' +
+        '<div class="row-info"><div class="label">Sesiones ADN</div></div>' +
+        stepper("sesionesADN", false) +
+      '</div>' +
+    '</div>' +
+
+    '<div class="card">' +
+      '<div class="card-title">PRODUCTOS VENDIDOS</div>';
+
+  productos.forEach(function(p, i) {
+    var s = stock[p.id]||0;
+    var low = s <= 10;
+    html +=
+      '<div class="row"' + (i===0?' style="border-top:none;padding-top:0"':'') + '>' +
+        '<div class="row-info">' +
+          '<div class="label'+(low?' low':'')+'">'+p.label+'</div>' +
+          '<div class="sublabel'+(low?' low':'')+'">'+( low?'Stock bajo: ':'En stock: ')+s+' · '+fmt(PRECIOS[p.id])+' c/u</div>' +
+        '</div>' +
+        stepper(p.id, low) +
+      '</div>';
+  });
+
+  html += '</div>' +
+    '<div class="card">' +
+      '<div class="card-title">GASTOS DEL DIA</div>' +
+      '<div id="gastos-lista"></div>' +
+      '<button class="btn-add" onclick="agregarGasto()">+ Agregar gasto</button>' +
+    '</div>' +
+
+    '<div class="card">' +
+      '<div class="card-title">CIERRE DE CAJA</div>' +
+      '<div class="caja-label">Total SINPE del dia (₡)</div>' +
+      '<input class="caja-input" type="number" id="totalSinpe" placeholder="0" inputmode="numeric" oninput="actualizarTodo()">' +
+      '<div class="caja-label">Efectivo en caja al cierre (₡)</div>' +
+      '<input class="caja-input" type="number" id="efectivoCaja" placeholder="0" inputmode="numeric" oninput="actualizarTodo()">' +
+      '<div class="caja-label">Notas</div>' +
+      '<textarea class="caja-textarea" id="notas" placeholder="Opcional"></textarea>' +
+    '</div>' +
+
+    '<div class="card">' +
+      '<div class="card-title">INVENTARIO AL CIERRE</div>';
+
+  productos.forEach(function(p, i) {
+    var invKey = "inv"+p.id;
+    valores[invKey] = stock[p.id]||0;
+    html +=
+      '<div class="row"' + (i===0?' style="border-top:none;padding-top:0"':'') + '>' +
+        '<div class="row-info"><div class="label">'+p.label+'</div></div>' +
+        stepper(invKey, false) +
+      '</div>';
+  });
+
+  html += '</div>' +
+
+    '<div class="total-card">' +
+      '<div class="total-row"><span class="tl">SINPE</span><span class="tv" id="sinpe-display">₡0</span></div>' +
+      '<div class="total-row"><span class="tl">Efectivo</span><span class="tv" id="ef-display">₡0</span></div>' +
+      '<div class="total-div"></div>' +
+      '<div class="total-final"><span class="tl">Total reportado</span><span class="tv" id="total-display">₡0</span></div>' +
+    '</div>' +
+
+    '<div id="diff-section"></div>' +
+
+    '<button class="btn-submit" id="btn-enviar" onclick="enviarCierre()">Enviar cierre del dia</button>';
+
+  document.getElementById("cierre-content").innerHTML = html;
+
+  productos.forEach(function(p) {
+    var el = document.getElementById("sval-inv"+p.id);
+    if (el) el.textContent = stock[p.id]||0;
+  });
+}
+
+function renderEntrada() {
+  var html = '<div class="card"><div class="card-title">ENTRADA DE MERCADERIA</div>';
+  productos.forEach(function(p, i) {
+    var entKey = "ent"+p.id;
+    html +=
+      '<div class="row"' + (i===0?' style="border-top:none;padding-top:0"':'') + '>' +
+        '<div class="row-info"><div class="label">'+p.label+'</div></div>' +
+        stepper(entKey, false) +
+      '</div>';
+  });
+  html +=
+    '<div style="margin-top:14px;">' +
+      '<div class="caja-label">Notas</div>' +
+      '<textarea class="caja-textarea" id="entrada-notas" placeholder="Opcional"></textarea>' +
+    '</div></div>' +
+    '<button class="btn-submit" onclick="enviarEntrada()">Registrar entrada</button>';
+  document.getElementById("entrada-content").innerHTML = html;
+}
+
+function agregarGasto() {
+  gastoNum++;
+  var n = gastoNum;
+  gastosActivos.push(n);
+  var div = document.createElement("div");
+  div.className = "gasto-item";
+  div.id = "gasto-"+n;
+  div.innerHTML =
+    '<div class="gasto-top">' +
+      '<span class="gasto-num">GASTO '+n+'</span>' +
+      '<button class="btn-del" onclick="eliminarGasto('+n+')">Eliminar</button>' +
+    '</div>' +
+    '<input class="gasto-field" type="text" id="gdesc-'+n+'" placeholder="Descripcion">' +
+    '<input class="gasto-field" type="number" id="gmonto-'+n+'" placeholder="Monto en colones" inputmode="numeric">' +
+    '<select class="gasto-field" id="gmetodo-'+n+'">' +
+      '<option value="SINPE">SINPE</option>' +
+      '<option value="Efectivo">Efectivo</option>' +
+    '</select>';
+  document.getElementById("gastos-lista").appendChild(div);
+}
+
+function eliminarGasto(n) {
+  var el = document.getElementById("gasto-"+n);
+  if (el) el.remove();
+  gastosActivos = gastosActivos.filter(function(x){ return x!==n; });
+}
+
+function enviarCierre() {
+  var btn = document.getElementById("btn-enviar");
+  btn.disabled = true;
+  btn.textContent = "Enviando...";
+
+  var gastos = [];
+  gastosActivos.forEach(function(n) {
+    var desc = document.getElementById("gdesc-"+n);
+    var monto = document.getElementById("gmonto-"+n);
+    var metodo = document.getElementById("gmetodo-"+n);
+    if (desc && monto && desc.value && monto.value) {
+      gastos.push({descripcion:desc.value, monto:monto.value, metodo:metodo.value});
+    }
+  });
+
+  var sinpe = Number(document.getElementById("totalSinpe").value)||0;
+  var ef = Number(document.getElementById("efectivoCaja").value)||0;
+  var esperado = calcVentas();
+
+  var datos = {
+    accion: "cierre",
+    reservasParticulares: valores.reservasParticulares,
+    sesionesADN: valores.sesionesADN,
+    gatorades: valores.Gatorades,
+    aguas: valores.Aguas,
+    snacks: valores.Snacks,
+    gaseosas: valores.Gaseosas,
+    tes: valores.Tes,
+    helados: valores.Helados,
+    totalSinpe: sinpe,
+    efectivoCaja: ef,
+    ventasEsperadas: esperado,
+    diferencia: esperado - (sinpe + ef),
+    notas: document.getElementById("notas").value,
+    gastos: gastos
+  };
+
+  fetch(SCRIPT_URL, {
+    method: "POST",
+    body: JSON.stringify(datos)
+  })
+  .then(function(r){ return r.json(); })
+  .then(function() {
+    document.getElementById("panel-cierre").innerHTML =
+      '<div class="success">' +
+        '<div class="success-icon">✓</div>' +
+        '<h2>Cierre enviado</h2>' +
+        '<p>El reporte del dia fue registrado correctamente.<br>Buenas noches.</p>' +
+      '</div>';
+  })
+  .catch(function(err) {
+    btn.disabled = false;
+    btn.textContent = "Enviar cierre del dia";
+    alert("Error al enviar. Intenta de nuevo.");
+  });
+}
+
+function enviarEntrada() {
+  var datos = {
+    accion: "entrada",
+    gatorades: valores.entGatorades,
+    aguas: valores.entAguas,
+    snacks: valores.entSnacks,
+    gaseosas: valores.entGaseosas,
+    tes: valores.entTes,
+    helados: valores.entHelados,
+    notas: document.getElementById("entrada-notas") ? document.getElementById("entrada-notas").value : ""
+  };
+
+  fetch(SCRIPT_URL, {
+    method: "POST",
+    body: JSON.stringify(datos)
+  })
+  .then(function(r){ return r.json(); })
+  .then(function() {
+    alert("Entrada registrada correctamente.");
+  })
+  .catch(function() {
+    alert("Error al registrar. Intenta de nuevo.");
+  });
+}
+
+fetch(SCRIPT_URL)
+  .then(function(r){ return r.json(); })
+  .then(function(s) {
+    stock = s;
+    renderCierre();
+    renderEntrada();
+  })
+  .catch(function() {
+    document.getElementById("cierre-content").innerHTML =
+      '<div class="loading">Error cargando inventario. Recarga la pagina.</div>';
+  });
+</script>
+</body>
+</html>
