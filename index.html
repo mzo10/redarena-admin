@@ -202,10 +202,10 @@ function cambiarStock(productoId, delta) {
 
 function guardarStock(productoId, cantidad) {
   fetch(SCRIPT_URL, {
-    method:"POST",
-    body:JSON.stringify({accion:"actualizarStock", producto:productoId, cantidad:cantidad})
+    method: "POST",
+    mode: "no-cors",
+    body: JSON.stringify({accion:"actualizarStock", producto:productoId, cantidad:cantidad})
   })
-  .then(function(r){return r.json();})
   .then(function() {
     var statusEl = document.getElementById("invstatus-"+productoId);
     if (statusEl) {
@@ -430,21 +430,24 @@ function enviarCierre() {
     gastos: gastos
   };
 
-  fetch(SCRIPT_URL, {method:"POST", body:JSON.stringify(datos)})
-    .then(function(r){return r.json();})
-    .then(function() {
-      document.getElementById("panel-cierre").innerHTML =
-        '<div class="success">'+
-          '<div class="success-icon">✓</div>'+
-          '<h2>Cierre enviado</h2>'+
-          '<p>El reporte del dia fue registrado correctamente.<br>Buenas noches.</p>'+
-        '</div>';
-    })
-    .catch(function() {
-      btn.disabled = false;
-      btn.textContent = "Enviar cierre del dia";
-      alert("Error al enviar. Intenta de nuevo.");
-    });
+  fetch(SCRIPT_URL, {
+    method: "POST",
+    mode: "no-cors",
+    body: JSON.stringify(datos)
+  })
+  .then(function() {
+    document.getElementById("panel-cierre").innerHTML =
+      '<div class="success">'+
+        '<div class="success-icon">✓</div>'+
+        '<h2>Cierre enviado</h2>'+
+        '<p>El reporte del dia fue registrado correctamente.<br>Buenas noches.</p>'+
+      '</div>';
+  })
+  .catch(function() {
+    btn.disabled = false;
+    btn.textContent = "Enviar cierre del dia";
+    alert("Error al enviar. Intenta de nuevo.");
+  });
 }
 
 fetch(SCRIPT_URL)
