@@ -57,7 +57,6 @@ body { background: #f2f2f2; font-family: -apple-system, BlinkMacSystemFont, 'Hel
 .caja-textarea:focus { border-color: #1a1a1a; background: #fff; }
 
 .efectivo-card { background: #fff; margin: 10px 14px 0; border-radius: 20px; padding: 18px; border-left: 4px solid #1a1a1a; }
-.efectivo-card .card-title { margin-bottom: 12px; }
 .efectivo-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-top: 0.5px solid #f5f5f5; }
 .efectivo-row:first-of-type { border-top: none; padding-top: 0; }
 .efectivo-row .el { font-size: 14px; color: #888; }
@@ -123,16 +122,18 @@ body { background: #f2f2f2; font-family: -apple-system, BlinkMacSystemFont, 'Hel
 </div>
 
 <script>
-var SCRIPT_URL = "https://script.google.com/macros/s/AKfycbznZRssKYFtwGz-IyAhiFhe8k6i9dA37vSD_POFcJ-KyV1Rw85H8nFrQL1oC6l-gastYg/exec";
+var SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwo-w48xjxEQmu__5PMR39YqPXm6DSnYRl5uwwK2ChWU9u2_O_KRq9AedmT_O6hRu5mRQ/exec";
 
-var PRECIOS = { Gatorades:1400, Aguas:800, Snacks:350, Gaseosas:1000, Tes:1000, Helados:1000, Reservas:25000 };
+var PRECIOS = { Gatorades:1400, Aguas:800, Snacks:350, Gaseosas:1000, Tes:1000, Helados:1000, PartidosPlay:1500, Reservas:25000 };
+
 var productos = [
-  {id:"Gatorades", label:"Gatorades"},
-  {id:"Aguas", label:"Aguas"},
-  {id:"Snacks", label:"Snacks"},
-  {id:"Gaseosas", label:"Gaseosas"},
-  {id:"Tes", label:"Tes frios"},
-  {id:"Helados", label:"Helados"}
+  {id:"Gatorades", label:"Gatorades", precio:1400},
+  {id:"Aguas", label:"Aguas", precio:800},
+  {id:"Snacks", label:"Snacks", precio:350},
+  {id:"Gaseosas", label:"Gaseosas", precio:1000},
+  {id:"Tes", label:"Tes frios", precio:1000},
+  {id:"Helados", label:"Helados", precio:1000},
+  {id:"PartidosPlay", label:"Partidos Play", precio:1500}
 ];
 
 var valores = { reservasParticulares:0, sesionesADN:0 };
@@ -152,21 +153,19 @@ var gastosActivos = [];
 var dias = ["Domingo","Lunes","Martes","Miercoles","Jueves","Viernes","Sabado"];
 var meses = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
 var hoy = new Date();
-document.getElementById("fecha-txt").textContent = dias[hoy.getDay()] + " " + hoy.getDate() + " de " + meses[hoy.getMonth()] + " " + hoy.getFullYear();
+document.getElementById("fecha-txt").textContent = dias[hoy.getDay()]+" "+hoy.getDate()+" de "+meses[hoy.getMonth()]+" "+hoy.getFullYear();
 
-function fmt(n) {
-  return "\u20a1" + Math.round(n).toLocaleString("es-CR");
-}
+function fmt(n) { return "\u20a1"+Math.round(n).toLocaleString("es-CR"); }
 
 function switchTab(tab) {
   ["cierre","entrada"].forEach(function(t) {
-    document.getElementById("tab-"+t).className = t===tab ? "tab active" : "tab inactive";
-    document.getElementById("panel-"+t).className = t===tab ? "panel active" : "panel";
+    document.getElementById("tab-"+t).className = t===tab?"tab active":"tab inactive";
+    document.getElementById("panel-"+t).className = t===tab?"panel active":"panel";
   });
 }
 
 function cambiar(key, delta) {
-  valores[key] = Math.max(0, (valores[key]||0) + delta);
+  valores[key] = Math.max(0, (valores[key]||0)+delta);
   var el = document.getElementById("sval-"+key);
   if (el) el.textContent = valores[key];
   actualizarTodo();
@@ -174,7 +173,7 @@ function cambiar(key, delta) {
 
 function calcVentas() {
   var t = valores.reservasParticulares * PRECIOS.Reservas;
-  productos.forEach(function(p) { t += (valores[p.id]||0) * PRECIOS[p.id]; });
+  productos.forEach(function(p) { t += (valores[p.id]||0)*p.precio; });
   return t;
 }
 
@@ -185,9 +184,9 @@ function actualizarTodo() {
 
   var sinpe = Number(sinpeEl.value)||0;
   var ef = Number(efEl.value)||0;
-  var total = sinpe + ef;
+  var total = sinpe+ef;
   var esperado = calcVentas();
-  var diff = esperado - total;
+  var diff = esperado-total;
 
   var sd = document.getElementById("sinpe-display");
   var ed = document.getElementById("ef-display");
@@ -199,93 +198,93 @@ function actualizarTodo() {
   var ds = document.getElementById("diff-section");
   if (!ds) return;
 
-  if (esperado === 0 && total === 0) { ds.innerHTML = ""; return; }
+  if (esperado===0 && total===0) { ds.innerHTML=""; return; }
 
-  if (Math.abs(diff) <= 100) {
+  if (Math.abs(diff)<=100) {
     ds.innerHTML =
-      '<div class="diff-card diff-ok">' +
-        '<div class="diff-icon">✅</div>' +
-        '<div class="diff-title ok">Todo cuadra</div>' +
-        '<div class="diff-row"><span class="dl">Ventas calculadas</span><span class="dv">'+fmt(esperado)+'</span></div>' +
-        '<div class="diff-row"><span class="dl">Total reportado</span><span class="dv">'+fmt(total)+'</span></div>' +
+      '<div class="diff-card diff-ok">'+
+        '<div class="diff-icon">✅</div>'+
+        '<div class="diff-title ok">Todo cuadra</div>'+
+        '<div class="diff-row"><span class="dl">Ventas calculadas</span><span class="dv">'+fmt(esperado)+'</span></div>'+
+        '<div class="diff-row"><span class="dl">Total reportado</span><span class="dv">'+fmt(total)+'</span></div>'+
       '</div>';
   } else {
     ds.innerHTML =
-      '<div class="diff-card diff-warn">' +
-        '<div class="diff-icon">⚠️</div>' +
-        '<div class="diff-title warn">Diferencia de '+fmt(Math.abs(diff))+'</div>' +
-        '<div class="diff-row"><span class="dl">Ventas calculadas</span><span class="dv">'+fmt(esperado)+'</span></div>' +
-        '<div class="diff-row"><span class="dl">Total reportado</span><span class="dv">'+fmt(total)+'</span></div>' +
-        '<div class="diff-row"><span class="dl">Diferencia</span><span class="dv red">'+fmt(diff)+'</span></div>' +
+      '<div class="diff-card diff-warn">'+
+        '<div class="diff-icon">⚠️</div>'+
+        '<div class="diff-title warn">Diferencia de '+fmt(Math.abs(diff))+'</div>'+
+        '<div class="diff-row"><span class="dl">Ventas calculadas</span><span class="dv">'+fmt(esperado)+'</span></div>'+
+        '<div class="diff-row"><span class="dl">Total reportado</span><span class="dv">'+fmt(total)+'</span></div>'+
+        '<div class="diff-row"><span class="dl">Diferencia</span><span class="dv red">'+fmt(diff)+'</span></div>'+
       '</div>';
   }
 }
 
 function stepper(key, isLow, initVal) {
-  if (initVal !== undefined) valores[key] = initVal;
-  return '<div class="stepper">' +
-    '<button class="sbtn minus" onclick="cambiar(\''+key+'\',-1)">−</button>' +
-    '<span class="sval'+(isLow?' low':'')+'" id="sval-'+key+'">'+(valores[key]||0)+'</span>' +
-    '<button class="sbtn plus" onclick="cambiar(\''+key+'\',1)">+</button>' +
+  if (initVal!==undefined) valores[key]=initVal;
+  return '<div class="stepper">'+
+    '<button class="sbtn minus" onclick="cambiar(\''+key+'\',-1)">−</button>'+
+    '<span class="sval'+(isLow?' low':'')+'" id="sval-'+key+'">'+(valores[key]||0)+'</span>'+
+    '<button class="sbtn plus" onclick="cambiar(\''+key+'\',1)">+</button>'+
   '</div>';
 }
 
 function renderCierre() {
   var html =
-    '<div class="card">' +
-      '<div class="card-title">RESERVAS DE HOY</div>' +
-      '<div class="row">' +
-        '<div class="row-info"><div class="label">Particulares</div><div class="sublabel">'+fmt(PRECIOS.Reservas)+' c/u</div></div>' +
-        stepper("reservasParticulares", false) +
-      '</div>' +
-      '<div class="row">' +
-        '<div class="row-info"><div class="label">Sesiones ADN</div></div>' +
-        stepper("sesionesADN", false) +
-      '</div>' +
-    '</div>' +
+    '<div class="card">'+
+      '<div class="card-title">RESERVAS DE HOY</div>'+
+      '<div class="row">'+
+        '<div class="row-info"><div class="label">Particulares</div><div class="sublabel">'+fmt(PRECIOS.Reservas)+' c/u</div></div>'+
+        stepper("reservasParticulares", false)+
+      '</div>'+
+      '<div class="row">'+
+        '<div class="row-info"><div class="label">Sesiones ADN</div></div>'+
+        stepper("sesionesADN", false)+
+      '</div>'+
+    '</div>'+
 
-    '<div class="card">' +
+    '<div class="card">'+
       '<div class="card-title">PRODUCTOS VENDIDOS</div>';
 
   productos.forEach(function(p, i) {
     var s = stock[p.id]||0;
-    var low = s <= 10;
+    var low = s<=10;
     html +=
       '<div class="row"'+(i===0?' style="border-top:none;padding-top:0"':'')+'>'+
         '<div class="row-info">'+
           '<div class="label'+(low?' low':'')+'">'+p.label+'</div>'+
-          '<div class="sublabel'+(low?' low':'')+'">'+( low?'Stock bajo: ':'En stock: ')+s+' · '+fmt(PRECIOS[p.id])+' c/u</div>'+
+          '<div class="sublabel'+(low?' low':'')+'">'+( low?'Stock bajo: ':'En stock: ')+s+' · '+fmt(p.precio)+' c/u</div>'+
         '</div>'+
         stepper(p.id, low)+
       '</div>';
   });
 
-  html += '</div>' +
+  html += '</div>'+
 
-    '<div class="card">' +
-      '<div class="card-title">GASTOS DEL DIA</div>' +
-      '<div id="gastos-lista"></div>' +
-      '<button class="btn-add" onclick="agregarGasto()">+ Agregar gasto</button>' +
-    '</div>' +
+    '<div class="card">'+
+      '<div class="card-title">GASTOS DEL DIA</div>'+
+      '<div id="gastos-lista"></div>'+
+      '<button class="btn-add" onclick="agregarGasto()">+ Agregar gasto</button>'+
+    '</div>'+
 
-    '<div class="efectivo-card">' +
-      '<div class="card-title">EFECTIVO EN CAJA</div>' +
-      '<div class="efectivo-row"><span class="el">Base inicio de mes</span><span class="ev">'+fmt(cajaBase)+'</span></div>' +
-      '<div class="efectivo-row"><span class="el">Acumulado del mes</span><span class="ev">'+fmt(acumuladoEfectivo)+'</span></div>' +
-      '<div class="efectivo-total"><span class="el">Total esperado en caja</span><span class="ev">'+fmt(totalEfectivoEsperado)+'</span></div>' +
-    '</div>' +
+    '<div class="efectivo-card">'+
+      '<div class="card-title">EFECTIVO EN CAJA</div>'+
+      '<div class="efectivo-row"><span class="el">Base inicio de mes</span><span class="ev">'+fmt(cajaBase)+'</span></div>'+
+      '<div class="efectivo-row"><span class="el">Acumulado del mes</span><span class="ev">'+fmt(acumuladoEfectivo - cajaBase)+'</span></div>'+
+      '<div class="efectivo-total"><span class="el">Total esperado en caja</span><span class="ev">'+fmt(totalEfectivoEsperado)+'</span></div>'+
+    '</div>'+
 
-    '<div class="card">' +
-      '<div class="card-title">CIERRE DE CAJA</div>' +
-      '<div class="caja-label">Total SINPE del dia (₡)</div>' +
-      '<input class="caja-input" type="number" id="totalSinpe" placeholder="0" inputmode="numeric" oninput="actualizarTodo()">' +
-      '<div class="caja-label">Efectivo en caja al cierre (₡)</div>' +
-      '<input class="caja-input" type="number" id="efectivoCaja" placeholder="0" inputmode="numeric" oninput="actualizarTodo()">' +
-      '<div class="caja-label">Notas</div>' +
-      '<textarea class="caja-textarea" id="notas" placeholder="Opcional"></textarea>' +
-    '</div>' +
+    '<div class="card">'+
+      '<div class="card-title">CIERRE DE CAJA</div>'+
+      '<div class="caja-label">Total SINPE del dia (₡)</div>'+
+      '<input class="caja-input" type="number" id="totalSinpe" placeholder="0" inputmode="numeric" oninput="actualizarTodo()">'+
+      '<div class="caja-label">Efectivo en caja al cierre (₡)</div>'+
+      '<input class="caja-input" type="number" id="efectivoCaja" placeholder="0" inputmode="numeric" oninput="actualizarTodo()">'+
+      '<div class="caja-label">Notas</div>'+
+      '<textarea class="caja-textarea" id="notas" placeholder="Opcional"></textarea>'+
+    '</div>'+
 
-    '<div class="card">' +
+    '<div class="card">'+
       '<div class="card-title">INVENTARIO AL CIERRE</div>';
 
   productos.forEach(function(p, i) {
@@ -297,16 +296,16 @@ function renderCierre() {
       '</div>';
   });
 
-  html += '</div>' +
+  html += '</div>'+
 
-    '<div class="total-card">' +
-      '<div class="total-row"><span class="tl">SINPE</span><span class="tv" id="sinpe-display">₡0</span></div>' +
-      '<div class="total-row"><span class="tl">Efectivo</span><span class="tv" id="ef-display">₡0</span></div>' +
-      '<div class="total-div"></div>' +
-      '<div class="total-final"><span class="tl">Total reportado</span><span class="tv" id="total-display">₡0</span></div>' +
-    '</div>' +
+    '<div class="total-card">'+
+      '<div class="total-row"><span class="tl">SINPE</span><span class="tv" id="sinpe-display">₡0</span></div>'+
+      '<div class="total-row"><span class="tl">Efectivo</span><span class="tv" id="ef-display">₡0</span></div>'+
+      '<div class="total-div"></div>'+
+      '<div class="total-final"><span class="tl">Total reportado</span><span class="tv" id="total-display">₡0</span></div>'+
+    '</div>'+
 
-    '<div id="diff-section"></div>' +
+    '<div id="diff-section"></div>'+
 
     '<button class="btn-submit" id="btn-enviar" onclick="enviarCierre()">Enviar cierre del dia</button>';
 
@@ -324,10 +323,10 @@ function renderEntrada() {
       '</div>';
   });
   html +=
-    '<div style="margin-top:14px;">' +
-      '<div class="caja-label">Notas</div>' +
-      '<textarea class="caja-textarea" id="entrada-notas" placeholder="Opcional"></textarea>' +
-    '</div></div>' +
+    '<div style="margin-top:14px;">'+
+      '<div class="caja-label">Notas</div>'+
+      '<textarea class="caja-textarea" id="entrada-notas" placeholder="Opcional"></textarea>'+
+    '</div></div>'+
     '<button class="btn-submit" onclick="enviarEntrada()">Registrar entrada</button>';
   document.getElementById("entrada-content").innerHTML = html;
 }
@@ -340,15 +339,15 @@ function agregarGasto() {
   div.className = "gasto-item";
   div.id = "gasto-"+n;
   div.innerHTML =
-    '<div class="gasto-top">' +
-      '<span class="gasto-num">GASTO '+n+'</span>' +
-      '<button class="btn-del" onclick="eliminarGasto('+n+')">Eliminar</button>' +
-    '</div>' +
-    '<input class="gasto-field" type="text" id="gdesc-'+n+'" placeholder="Descripcion">' +
-    '<input class="gasto-field" type="number" id="gmonto-'+n+'" placeholder="Monto en colones" inputmode="numeric">' +
-    '<select class="gasto-field" id="gmetodo-'+n+'">' +
-      '<option value="SINPE">SINPE</option>' +
-      '<option value="Efectivo">Efectivo</option>' +
+    '<div class="gasto-top">'+
+      '<span class="gasto-num">GASTO '+n+'</span>'+
+      '<button class="btn-del" onclick="eliminarGasto('+n+')">Eliminar</button>'+
+    '</div>'+
+    '<input class="gasto-field" type="text" id="gdesc-'+n+'" placeholder="Descripcion">'+
+    '<input class="gasto-field" type="number" id="gmonto-'+n+'" placeholder="Monto en colones" inputmode="numeric">'+
+    '<select class="gasto-field" id="gmetodo-'+n+'">'+
+      '<option value="SINPE">SINPE</option>'+
+      '<option value="Efectivo">Efectivo</option>'+
     '</select>';
   document.getElementById("gastos-lista").appendChild(div);
 }
@@ -356,7 +355,7 @@ function agregarGasto() {
 function eliminarGasto(n) {
   var el = document.getElementById("gasto-"+n);
   if (el) el.remove();
-  gastosActivos = gastosActivos.filter(function(x){ return x!==n; });
+  gastosActivos = gastosActivos.filter(function(x){return x!==n;});
 }
 
 function enviarCierre() {
@@ -388,22 +387,23 @@ function enviarCierre() {
     gaseosas: valores.Gaseosas,
     tes: valores.Tes,
     helados: valores.Helados,
+    partidosPlay: valores.PartidosPlay,
     totalSinpe: sinpe,
     efectivoCaja: ef,
     ventasEsperadas: esperado,
-    diferencia: esperado - (sinpe + ef),
+    diferencia: esperado-(sinpe+ef),
     notas: document.getElementById("notas").value,
     gastos: gastos
   };
 
-  fetch(SCRIPT_URL, { method:"POST", body:JSON.stringify(datos) })
-    .then(function(r){ return r.json(); })
+  fetch(SCRIPT_URL, {method:"POST", body:JSON.stringify(datos)})
+    .then(function(r){return r.json();})
     .then(function() {
       document.getElementById("panel-cierre").innerHTML =
-        '<div class="success">' +
-          '<div class="success-icon">✓</div>' +
-          '<h2>Cierre enviado</h2>' +
-          '<p>El reporte del dia fue registrado correctamente.<br>Buenas noches.</p>' +
+        '<div class="success">'+
+          '<div class="success-icon">✓</div>'+
+          '<h2>Cierre enviado</h2>'+
+          '<p>El reporte del dia fue registrado correctamente.<br>Buenas noches.</p>'+
         '</div>';
     })
     .catch(function() {
@@ -422,17 +422,18 @@ function enviarEntrada() {
     gaseosas: valores.entGaseosas,
     tes: valores.entTes,
     helados: valores.entHelados,
+    partidosPlay: valores.entPartidosPlay,
     notas: document.getElementById("entrada-notas") ? document.getElementById("entrada-notas").value : ""
   };
 
-  fetch(SCRIPT_URL, { method:"POST", body:JSON.stringify(datos) })
-    .then(function(r){ return r.json(); })
+  fetch(SCRIPT_URL, {method:"POST", body:JSON.stringify(datos)})
+    .then(function(r){return r.json();})
     .then(function() { alert("Entrada registrada correctamente."); })
     .catch(function() { alert("Error al registrar. Intenta de nuevo."); });
 }
 
 fetch(SCRIPT_URL)
-  .then(function(r){ return r.json(); })
+  .then(function(r){return r.json();})
   .then(function(data) {
     stock = data.stock || {};
     cajaBase = data.cajaBase || 0;
