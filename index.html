@@ -50,13 +50,8 @@ body { background: #f2f2f2; font-family: -apple-system, BlinkMacSystemFont, 'Hel
 .gasto-field:last-child { margin-bottom: 0; }
 .btn-add { display: block; width: 100%; padding: 14px; background: none; border: 1.5px dashed #ccc; border-radius: 14px; font-size: 15px; font-weight: 600; color: #999; cursor: pointer; margin-top: 6px; font-family: inherit; }
 
-.caja-label { font-size: 12px; color: #aaa; margin-bottom: 6px; font-weight: 500; }
-.caja-input { width: 100%; padding: 13px 16px; border: 1.5px solid #ebebeb; border-radius: 14px; font-size: 18px; font-weight: 600; color: #111; background: #f7f7f7; margin-bottom: 14px; font-family: inherit; -webkit-appearance: none; outline: none; }
-.caja-input:focus { border-color: #1a1a1a; background: #fff; }
-.caja-textarea { width: 100%; padding: 13px 16px; border: 1.5px solid #ebebeb; border-radius: 14px; font-size: 16px; color: #111; background: #f7f7f7; min-height: 80px; resize: none; font-family: inherit; outline: none; }
-.caja-textarea:focus { border-color: #1a1a1a; background: #fff; }
-
 .efectivo-card { background: #fff; margin: 10px 14px 0; border-radius: 20px; padding: 18px; border-left: 4px solid #1a1a1a; }
+.efectivo-card .card-title { margin-bottom: 12px; }
 .efectivo-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-top: 0.5px solid #f5f5f5; }
 .efectivo-row:first-of-type { border-top: none; padding-top: 0; }
 .efectivo-row .el { font-size: 14px; color: #888; }
@@ -64,6 +59,15 @@ body { background: #f2f2f2; font-family: -apple-system, BlinkMacSystemFont, 'Hel
 .efectivo-total { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; padding-top: 10px; border-top: 1.5px solid #1a1a1a; }
 .efectivo-total .el { font-size: 15px; font-weight: 700; color: #1a1a1a; }
 .efectivo-total .ev { font-size: 20px; font-weight: 700; color: #1a1a1a; }
+
+.caja-label { font-size: 12px; color: #aaa; margin-bottom: 6px; font-weight: 500; }
+.caja-input { width: 100%; padding: 13px 16px; border: 1.5px solid #ebebeb; border-radius: 14px; font-size: 18px; font-weight: 600; color: #111; background: #f7f7f7; margin-bottom: 14px; font-family: inherit; -webkit-appearance: none; outline: none; }
+.caja-input:focus { border-color: #1a1a1a; background: #fff; }
+.caja-textarea { width: 100%; padding: 13px 16px; border: 1.5px solid #ebebeb; border-radius: 14px; font-size: 16px; color: #111; background: #f7f7f7; min-height: 80px; resize: none; font-family: inherit; outline: none; }
+.caja-textarea:focus { border-color: #1a1a1a; background: #fff; }
+
+.stock-badge { background: #f0f0f0; border-radius: 8px; padding: 4px 10px; font-size: 13px; font-weight: 600; color: #555; }
+.stock-badge.low { background: #ffecec; color: #CC0000; }
 
 .total-card { background: #1a1a1a; margin: 10px 14px 0; border-radius: 20px; padding: 18px; }
 .total-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
@@ -139,7 +143,6 @@ var productos = [
 var valores = { reservasParticulares:0, sesionesADN:0 };
 productos.forEach(function(p) {
   valores[p.id] = 0;
-  valores["inv"+p.id] = 0;
   valores["ent"+p.id] = 0;
 });
 
@@ -220,8 +223,7 @@ function actualizarTodo() {
   }
 }
 
-function stepper(key, isLow, initVal) {
-  if (initVal!==undefined) valores[key]=initVal;
+function stepper(key, isLow) {
   return '<div class="stepper">'+
     '<button class="sbtn minus" onclick="cambiar(\''+key+'\',-1)">−</button>'+
     '<span class="sval'+(isLow?' low':'')+'" id="sval-'+key+'">'+(valores[key]||0)+'</span>'+
@@ -230,6 +232,8 @@ function stepper(key, isLow, initVal) {
 }
 
 function renderCierre() {
+  var acumSinBase = acumuladoEfectivo - cajaBase;
+
   var html =
     '<div class="card">'+
       '<div class="card-title">RESERVAS DE HOY</div>'+
@@ -270,7 +274,7 @@ function renderCierre() {
     '<div class="efectivo-card">'+
       '<div class="card-title">EFECTIVO EN CAJA</div>'+
       '<div class="efectivo-row"><span class="el">Base inicio de mes</span><span class="ev">'+fmt(cajaBase)+'</span></div>'+
-      '<div class="efectivo-row"><span class="el">Acumulado del mes</span><span class="ev">'+fmt(acumuladoEfectivo - cajaBase)+'</span></div>'+
+      '<div class="efectivo-row"><span class="el">Acumulado mes anterior</span><span class="ev">'+fmt(acumSinBase < 0 ? 0 : acumSinBase)+'</span></div>'+
       '<div class="efectivo-total"><span class="el">Total esperado en caja</span><span class="ev">'+fmt(totalEfectivoEsperado)+'</span></div>'+
     '</div>'+
 
@@ -283,20 +287,6 @@ function renderCierre() {
       '<div class="caja-label">Notas</div>'+
       '<textarea class="caja-textarea" id="notas" placeholder="Opcional"></textarea>'+
     '</div>'+
-
-    '<div class="card">'+
-      '<div class="card-title">INVENTARIO AL CIERRE</div>';
-
-  productos.forEach(function(p, i) {
-    var invKey = "inv"+p.id;
-    html +=
-      '<div class="row"'+(i===0?' style="border-top:none;padding-top:0"':'')+'>'+
-        '<div class="row-info"><div class="label">'+p.label+'</div></div>'+
-        stepper(invKey, false, stock[p.id]||0)+
-      '</div>';
-  });
-
-  html += '</div>'+
 
     '<div class="total-card">'+
       '<div class="total-row"><span class="tl">SINPE</span><span class="tv" id="sinpe-display">₡0</span></div>'+
@@ -314,20 +304,28 @@ function renderCierre() {
 
 function renderEntrada() {
   var html = '<div class="card"><div class="card-title">ENTRADA DE MERCADERIA</div>';
+
   productos.forEach(function(p, i) {
+    var s = stock[p.id]||0;
+    var low = s<=10;
     var entKey = "ent"+p.id;
     html +=
       '<div class="row"'+(i===0?' style="border-top:none;padding-top:0"':'')+'>'+
-        '<div class="row-info"><div class="label">'+p.label+'</div></div>'+
+        '<div class="row-info">'+
+          '<div class="label">'+p.label+'</div>'+
+          '<div class="sublabel'+(low?' low':'')+'">'+( low?'Stock bajo: ':'En stock: ')+s+'</div>'+
+        '</div>'+
         stepper(entKey, false)+
       '</div>';
   });
+
   html +=
     '<div style="margin-top:14px;">'+
       '<div class="caja-label">Notas</div>'+
       '<textarea class="caja-textarea" id="entrada-notas" placeholder="Opcional"></textarea>'+
     '</div></div>'+
     '<button class="btn-submit" onclick="enviarEntrada()">Registrar entrada</button>';
+
   document.getElementById("entrada-content").innerHTML = html;
 }
 
