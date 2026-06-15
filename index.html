@@ -66,8 +66,14 @@ body { background: #f2f2f2; font-family: -apple-system, BlinkMacSystemFont, 'Hel
 .caja-textarea { width: 100%; padding: 13px 16px; border: 1.5px solid #ebebeb; border-radius: 14px; font-size: 16px; color: #111; background: #f7f7f7; min-height: 80px; resize: none; font-family: inherit; outline: none; }
 .caja-textarea:focus { border-color: #1a1a1a; background: #fff; }
 
-.stock-badge { background: #f0f0f0; border-radius: 8px; padding: 4px 10px; font-size: 13px; font-weight: 600; color: #555; }
-.stock-badge.low { background: #ffecec; color: #CC0000; }
+.inv-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-top: 0.5px solid #f0f0f0; }
+.inv-row:first-of-type { border-top: none; padding-top: 0; }
+.inv-label { font-size: 16px; color: #111; }
+.inv-label.low { color: #CC0000; }
+.inv-right { display: flex; align-items: center; gap: 10px; }
+.inv-stock { font-size: 22px; font-weight: 700; min-width: 36px; text-align: center; color: #111; }
+.inv-stock.low { color: #CC0000; }
+.inv-saving { font-size: 11px; color: #aaa; text-align: center; margin-top: 2px; }
 
 .total-card { background: #1a1a1a; margin: 10px 14px 0; border-radius: 20px; padding: 18px; }
 .total-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
@@ -114,15 +120,15 @@ body { background: #f2f2f2; font-family: -apple-system, BlinkMacSystemFont, 'Hel
 
 <div class="tabs">
   <button class="tab active" id="tab-cierre" onclick="switchTab('cierre')">Cierre del dia</button>
-  <button class="tab inactive" id="tab-entrada" onclick="switchTab('entrada')">Mercaderia</button>
+  <button class="tab inactive" id="tab-mercaderia" onclick="switchTab('mercaderia')">Mercaderia</button>
 </div>
 
 <div id="panel-cierre" class="panel active">
   <div id="cierre-content"><div class="loading">Cargando...</div></div>
 </div>
 
-<div id="panel-entrada" class="panel">
-  <div id="entrada-content"><div class="loading">Cargando...</div></div>
+<div id="panel-mercaderia" class="panel">
+  <div id="mercaderia-content"><div class="loading">Cargando...</div></div>
 </div>
 
 <script>
@@ -143,7 +149,7 @@ var productos = [
 var valores = { reservasParticulares:0, sesionesADN:0 };
 productos.forEach(function(p) {
   valores[p.id] = 0;
-  valores["ent"+p.id] = 0;
+  valores["inv"+p.id] = 0;
 });
 
 var stock = {};
@@ -152,6 +158,7 @@ var acumuladoEfectivo = 0;
 var totalEfectivoEsperado = 0;
 var gastoNum = 0;
 var gastosActivos = [];
+var saveTimers = {};
 
 var dias = ["Domingo","Lunes","Martes","Miercoles","Jueves","Viernes","Sabado"];
 var meses = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
@@ -161,7 +168,7 @@ document.getElementById("fecha-txt").textContent = dias[hoy.getDay()]+" "+hoy.ge
 function fmt(n) { return "\u20a1"+Math.round(n).toLocaleString("es-CR"); }
 
 function switchTab(tab) {
-  ["cierre","entrada"].forEach(function(t) {
+  ["cierre","mercaderia"].forEach(function(t) {
     document.getElementById("tab-"+t).className = t===tab?"tab active":"tab inactive";
     document.getElementById("panel-"+t).className = t===tab?"panel active":"panel";
   });
@@ -172,6 +179,46 @@ function cambiar(key, delta) {
   var el = document.getElementById("sval-"+key);
   if (el) el.textContent = valores[key];
   actualizarTodo();
+}
+
+function cambiarStock(productoId, delta) {
+  var nuevoStock = Math.max(0, (stock[productoId]||0) + delta);
+  stock[productoId] = nuevoStock;
+  var el = document.getElementById("inv-"+productoId);
+  if (el) {
+    el.textContent = nuevoStock;
+    el.className = "inv-stock" + (nuevoStock<=10?" low":"");
+  }
+  var labelEl = document.getElementById("invlbl-"+productoId);
+  if (labelEl) {
+    labelEl.className = "inv-label" + (nuevoStock<=10?" low":"");
+  }
+  var statusEl = document.getElementById("invstatus-"+productoId);
+  if (statusEl) statusEl.textContent = "Guardando...";
+
+  clearTimeout(saveTimers[productoId]);
+  saveTimers[productoId] = setTimeout(function() {
+    guardarStock(productoId, nuevoStock);
+  }, 800);
+}
+
+function guardarStock(productoId, cantidad) {
+  fetch(SCRIPT_URL, {
+    method: "POST",
+    body: JSON.stringify({accion:"actualizarStock", producto:productoId, cantidad:cantidad})
+  })
+  .then(function(r){return r.json();})
+  .then(function() {
+    var statusEl = document.getElementById("invstatus-"+productoId);
+    if (statusEl) {
+      statusEl.textContent = "Guardado ✓";
+      setTimeout(function(){ statusEl.textContent = ""; }, 2000);
+    }
+  })
+  .catch(function() {
+    var statusEl = document.getElementById("invstatus-"+productoId);
+    if (statusEl) statusEl.textContent = "Error al guardar";
+  });
 }
 
 function calcVentas() {
@@ -274,15 +321,15 @@ function renderCierre() {
     '<div class="efectivo-card">'+
       '<div class="card-title">EFECTIVO EN CAJA</div>'+
       '<div class="efectivo-row"><span class="el">Base inicio de mes</span><span class="ev">'+fmt(cajaBase)+'</span></div>'+
-      '<div class="efectivo-row"><span class="el">Acumulado mes anterior</span><span class="ev">'+fmt(acumSinBase < 0 ? 0 : acumSinBase)+'</span></div>'+
+      '<div class="efectivo-row"><span class="el">Acumulado del mes</span><span class="ev">'+fmt(acumSinBase < 0 ? 0 : acumSinBase)+'</span></div>'+
       '<div class="efectivo-total"><span class="el">Total esperado en caja</span><span class="ev">'+fmt(totalEfectivoEsperado)+'</span></div>'+
     '</div>'+
 
     '<div class="card">'+
       '<div class="card-title">CIERRE DE CAJA</div>'+
-      '<div class="caja-label">Total SINPE del dia (₡)</div>'+
+      '<div class="caja-label">Ventas SINPE (₡)</div>'+
       '<input class="caja-input" type="number" id="totalSinpe" placeholder="0" inputmode="numeric" oninput="actualizarTodo()">'+
-      '<div class="caja-label">Efectivo en caja al cierre (₡)</div>'+
+      '<div class="caja-label">Ventas en efectivo (₡)</div>'+
       '<input class="caja-input" type="number" id="efectivoCaja" placeholder="0" inputmode="numeric" oninput="actualizarTodo()">'+
       '<div class="caja-label">Notas</div>'+
       '<textarea class="caja-textarea" id="notas" placeholder="Opcional"></textarea>'+
@@ -292,7 +339,7 @@ function renderCierre() {
       '<div class="total-row"><span class="tl">SINPE</span><span class="tv" id="sinpe-display">₡0</span></div>'+
       '<div class="total-row"><span class="tl">Efectivo</span><span class="tv" id="ef-display">₡0</span></div>'+
       '<div class="total-div"></div>'+
-      '<div class="total-final"><span class="tl">Total reportado</span><span class="tv" id="total-display">₡0</span></div>'+
+      '<div class="total-final"><span class="tl">Total ventas del dia</span><span class="tv" id="total-display">₡0</span></div>'+
     '</div>'+
 
     '<div id="diff-section"></div>'+
@@ -302,31 +349,33 @@ function renderCierre() {
   document.getElementById("cierre-content").innerHTML = html;
 }
 
-function renderEntrada() {
-  var html = '<div class="card"><div class="card-title">ENTRADA DE MERCADERIA</div>';
+function renderMercaderia() {
+  var html = '<div class="card"><div class="card-title">INVENTARIO ACTUAL</div>';
 
   productos.forEach(function(p, i) {
     var s = stock[p.id]||0;
     var low = s<=10;
-    var entKey = "ent"+p.id;
     html +=
-      '<div class="row"'+(i===0?' style="border-top:none;padding-top:0"':'')+'>'+
-        '<div class="row-info">'+
-          '<div class="label">'+p.label+'</div>'+
-          '<div class="sublabel'+(low?' low':'')+'">'+( low?'Stock bajo: ':'En stock: ')+s+'</div>'+
+      '<div class="inv-row"'+(i===0?' style="border-top:none;padding-top:0"':'')+'>'+
+        '<div>'+
+          '<div class="inv-label'+(low?' low':'')+'" id="invlbl-'+p.id+'">'+p.label+'</div>'+
+          '<div style="font-size:11px;color:'+(low?'#CC0000':'#aaa')+';">'+(low?'Stock bajo':'En stock')+'</div>'+
+          '<div class="inv-saving" id="invstatus-'+p.id+'"></div>'+
         '</div>'+
-        stepper(entKey, false)+
+        '<div class="inv-right">'+
+          '<button class="sbtn minus" onclick="cambiarStock(\''+p.id+'\',-1)">−</button>'+
+          '<span class="inv-stock'+(low?' low':'')+'" id="inv-'+p.id+'">'+s+'</span>'+
+          '<button class="sbtn plus" onclick="cambiarStock(\''+p.id+'\',1)">+</button>'+
+        '</div>'+
       '</div>';
   });
 
-  html +=
-    '<div style="margin-top:14px;">'+
-      '<div class="caja-label">Notas</div>'+
-      '<textarea class="caja-textarea" id="entrada-notas" placeholder="Opcional"></textarea>'+
-    '</div></div>'+
-    '<button class="btn-submit" onclick="enviarEntrada()">Registrar entrada</button>';
+  html += '</div>'+
+    '<div style="margin:14px 14px 0; background:#f7f7f7; border-radius:14px; padding:14px 16px;">'+
+      '<p style="font-size:12px;color:#999;text-align:center;line-height:1.6;">Los cambios se guardan automáticamente en la base de datos al tocar los botones.</p>'+
+    '</div>';
 
-  document.getElementById("entrada-content").innerHTML = html;
+  document.getElementById("mercaderia-content").innerHTML = html;
 }
 
 function agregarGasto() {
@@ -411,25 +460,6 @@ function enviarCierre() {
     });
 }
 
-function enviarEntrada() {
-  var datos = {
-    accion: "entrada",
-    gatorades: valores.entGatorades,
-    aguas: valores.entAguas,
-    snacks: valores.entSnacks,
-    gaseosas: valores.entGaseosas,
-    tes: valores.entTes,
-    helados: valores.entHelados,
-    partidosPlay: valores.entPartidosPlay,
-    notas: document.getElementById("entrada-notas") ? document.getElementById("entrada-notas").value : ""
-  };
-
-  fetch(SCRIPT_URL, {method:"POST", body:JSON.stringify(datos)})
-    .then(function(r){return r.json();})
-    .then(function() { alert("Entrada registrada correctamente."); })
-    .catch(function() { alert("Error al registrar. Intenta de nuevo."); });
-}
-
 fetch(SCRIPT_URL)
   .then(function(r){return r.json();})
   .then(function(data) {
@@ -438,7 +468,7 @@ fetch(SCRIPT_URL)
     acumuladoEfectivo = data.acumuladoEfectivo || 0;
     totalEfectivoEsperado = data.totalEfectivoEsperado || 0;
     renderCierre();
-    renderEntrada();
+    renderMercaderia();
   })
   .catch(function() {
     document.getElementById("cierre-content").innerHTML =
