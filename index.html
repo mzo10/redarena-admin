@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Red Arena | Cierre Diario</title>
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-body { background: #f2f2f2; font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif; padding-bottom: 60px; }
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+body { background: #f2f2f2; font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif; padding-bottom: 60px; touch-action: pan-x pan-y; }
 
 .header { background: #1a1a1a; padding: 52px 18px 18px; display: flex; justify-content: space-between; align-items: center; }
 .header-logo { width: 56px; height: 56px; object-fit: contain; flex-shrink: 0; }
@@ -16,7 +16,7 @@ body { background: #f2f2f2; font-family: -apple-system, BlinkMacSystemFont, 'Hel
 .header-right .fecha { color: rgba(255,255,255,0.4); font-size: 13px; margin-top: 4px; }
 
 .tabs { display: flex; background: #1a1a1a; padding: 0 16px 16px; gap: 8px; }
-.tab { flex: 1; padding: 11px 8px; text-align: center; font-size: 14px; font-weight: 600; border: none; border-radius: 10px; cursor: pointer; font-family: inherit; }
+.tab { flex: 1; padding: 11px 8px; text-align: center; font-size: 14px; font-weight: 600; border: none; border-radius: 10px; cursor: pointer; font-family: inherit; touch-action: manipulation; }
 .tab.active { background: #fff; color: #1a1a1a; }
 .tab.inactive { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.45); }
 
@@ -34,8 +34,8 @@ body { background: #f2f2f2; font-family: -apple-system, BlinkMacSystemFont, 'Hel
 .row-info .sublabel.low { color: #CC0000; font-weight: 600; }
 
 .stepper { display: flex; align-items: center; gap: 14px; }
-.sbtn { width: 38px; height: 38px; border-radius: 50%; border: none; font-size: 24px; font-weight: 400; cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1; }
-.sbtn:active { transform: scale(0.9); }
+.sbtn { width: 42px; height: 42px; border-radius: 50%; border: none; font-size: 24px; font-weight: 400; cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1; touch-action: manipulation; -webkit-tap-highlight-color: transparent; user-select: none; }
+.sbtn:active { opacity: 0.7; }
 .sbtn.minus { background: #f0f0f0; color: #1a1a1a; }
 .sbtn.plus { background: #1a1a1a; color: #fff; }
 .sval { font-size: 22px; font-weight: 700; min-width: 30px; text-align: center; color: #111; }
@@ -44,11 +44,11 @@ body { background: #f2f2f2; font-family: -apple-system, BlinkMacSystemFont, 'Hel
 .gasto-item { background: #f7f7f7; border-radius: 14px; padding: 14px; margin-bottom: 10px; }
 .gasto-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
 .gasto-num { font-size: 12px; font-weight: 700; color: #888; letter-spacing: 0.04em; }
-.btn-del { background: #ffecec; border: none; border-radius: 8px; padding: 5px 12px; font-size: 12px; color: #CC0000; font-weight: 700; cursor: pointer; font-family: inherit; }
+.btn-del { background: #ffecec; border: none; border-radius: 8px; padding: 5px 12px; font-size: 12px; color: #CC0000; font-weight: 700; cursor: pointer; font-family: inherit; touch-action: manipulation; }
 .gasto-field { width: 100%; padding: 12px 14px; border: 1.5px solid #e8e8e8; border-radius: 12px; font-size: 16px; color: #111; background: #fff; margin-bottom: 10px; font-family: inherit; -webkit-appearance: none; outline: none; }
 .gasto-field:focus { border-color: #1a1a1a; }
 .gasto-field:last-child { margin-bottom: 0; }
-.btn-add { display: block; width: 100%; padding: 14px; background: none; border: 1.5px dashed #ccc; border-radius: 14px; font-size: 15px; font-weight: 600; color: #999; cursor: pointer; margin-top: 6px; font-family: inherit; }
+.btn-add { display: block; width: 100%; padding: 14px; background: none; border: 1.5px dashed #ccc; border-radius: 14px; font-size: 15px; font-weight: 600; color: #999; cursor: pointer; margin-top: 6px; font-family: inherit; touch-action: manipulation; }
 
 .caja-label { font-size: 12px; color: #aaa; margin-bottom: 6px; font-weight: 500; }
 .caja-input { width: 100%; padding: 13px 16px; border: 1.5px solid #ebebeb; border-radius: 14px; font-size: 18px; font-weight: 600; color: #111; background: #f7f7f7; margin-bottom: 14px; font-family: inherit; -webkit-appearance: none; outline: none; }
@@ -88,7 +88,7 @@ body { background: #f2f2f2; font-family: -apple-system, BlinkMacSystemFont, 'Hel
 .diff-row .dv { font-weight: 600; color: #111; }
 .diff-row .dv.red { color: #CC0000; }
 
-.btn-submit { display: block; width: calc(100% - 28px); margin: 12px 14px 0; padding: 17px; background: #CC0000; border: none; border-radius: 16px; font-size: 18px; font-weight: 700; color: #fff; cursor: pointer; font-family: inherit; }
+.btn-submit { display: block; width: calc(100% - 28px); margin: 12px 14px 0; padding: 17px; background: #CC0000; border: none; border-radius: 16px; font-size: 18px; font-weight: 700; color: #fff; cursor: pointer; font-family: inherit; touch-action: manipulation; }
 .btn-submit:active { opacity: 0.85; }
 .btn-submit:disabled { background: #ccc; cursor: not-allowed; }
 
