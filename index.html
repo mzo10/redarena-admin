@@ -4,6 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Red Arena | Cierre Diario</title>
+<script>
+var lastTouchEnd = 0;
+document.addEventListener('touchend', function(e) {
+  var now = Date.now();
+  if (now - lastTouchEnd <= 300) {
+    e.preventDefault();
+  }
+  lastTouchEnd = now;
+}, { passive: false });
+</script>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
 body { background: #f2f2f2; font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif; padding-bottom: 60px; touch-action: pan-x pan-y; }
