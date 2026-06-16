@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Red Arena — POS</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;700;900&family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+:root{
+  --bg:#0D0D0D;--surface:#181818;--card:#1F1F1F;--card2:#252525;
+  --border:#2E2E2E;--border2:#3A3A3A;
+  --orange:#D4500A;--orange-dim:rgba(212,80,10,0.15);
+  --white:#F5F3F0;--muted:#6B6B6B;--muted2:#4A4A4A;
+  --green:#27AE60;--red:#C0392B;
+  --font:'DM Sans',sans-serif;--mono:'Poppins',sans-serif;
+}
+body{background:var(--bg);font-family:var(--font);color:var(--white);min-height:100vh;overflow-x:hidden}
+.screen{display:none;flex-direction:column;height:100vh;overflow:hidden}
+.screen.active{display:flex}
+.scroll-area{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:80px}
+
+/* HEADER */
+.header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 18px;position:sticky;top:0;z-index:100;display:grid;grid-template-columns:1fr auto;align-items:center;min-height:64px;gap:12px;flex-shrink:0}
+.hdr-left{display:flex;align-items:center;gap:10px}
+.hdr-logo{width:28px;height:28px;object-fit:contain;flex-shrink:0}
+.hdr-brand{font-size:15px;font-weight:700;letter-spacing:-0.3px}
+.hdr-sub{font-size:11px;color:var(--muted);margin-top:1px}
+.hdr-date-block{text-align:right}
+.hdr-dayname{font-size:10px;font-weight:700;color:var(--orange);text-transform:uppercase;letter-spacing:0.1em}
+.hdr-datenum{font-size:22px;font-weight:900;letter-spacing:-0.8px;line-height:1;font-family:var(--mono)}
+.hdr-monthyear{font-size:11px;color:var(--muted);font-family:var(--mono)}
+.chip{display:inline-flex;align-items:center;gap:5px;background:var(--green);color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:3px;margin-top:4px}
+
+/* TOTAL BAR */
+.total-bar{background:var(--card);border-bottom:1px solid var(--border);padding:14px 18px;display:flex;align-items:flex-end;justify-content:space-between;flex-shrink:0}
+.tb-lbl{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:3px}
+.tb-amount{font-family:var(--mono);font-size:34px;font-weight:500;color:var(--white);letter-spacing:-1.5px;line-height:1;transition:color 0.2s}
+.tb-amount.pulse{color:var(--orange)}
+.tb-items{font-size:11px;color:var(--muted);text-align:right}
+.tb-items strong{color:var(--white);font-weight:700;font-family:var(--mono)}
+
+.slbl{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.12em;padding:16px 18px 8px}
+
+/* RESERVAS */
+.reservas-block{margin:0 18px 6px;background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.res-row{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border)}
+.res-row:last-child{border:none}
+.res-name{font-size:14px;font-weight:700}
+.res-price{font-size:11px;font-family:var(--mono);color:var(--muted);margin-top:2px}
+.rctrl{display:flex;align-items:center}
+.rctrl-btn{width:36px;height:36px;background:var(--card2);border:1px solid var(--border2);font-size:20px;font-weight:300;color:var(--white);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.1s}
+.rctrl-btn:first-child{border-radius:8px 0 0 8px}
+.rctrl-btn:last-child{border-radius:0 8px 8px 0}
+.rctrl-btn:active{background:var(--orange);border-color:var(--orange)}
+.rctrl-num{width:40px;height:36px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:16px;font-weight:500;background:var(--card2);border-top:1px solid var(--border2);border-bottom:1px solid var(--border2);transition:color 0.15s}
+.rctrl-num.hot{color:var(--orange)}
+
+/* PRODUCT GRID */
+.pgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;padding:0 18px 4px}
+@media(min-width:540px){.pgrid{grid-template-columns:repeat(3,1fr)}}
+@media(min-width:780px){.pgrid{grid-template-columns:repeat(4,1fr)}}
+
+.pcard{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 12px 12px;display:flex;flex-direction:column;align-items:center;cursor:pointer;position:relative;overflow:hidden;transition:border-color 0.12s,transform 0.08s;user-select:none;min-height:148px}
+.pcard:active{transform:scale(0.95)}
+.pcard.hot{border-color:var(--orange);border-width:1.5px;background:#1A0E08}
+.pcard-bign{position:absolute;top:50%;left:50%;transform:translate(-50%,-60%);font-family:var(--mono);font-size:80px;font-weight:500;color:rgba(212,80,10,0.12);line-height:1;pointer-events:none;opacity:0;transition:opacity 0.15s}
+.pcard.hot .pcard-bign{opacity:1}
+.pcard-emoji{font-size:38px;line-height:1;margin-bottom:6px;position:relative;z-index:1}
+.pcard-name{font-size:12px;font-weight:700;text-align:center;position:relative;z-index:1;line-height:1.25}
+.pcard-price{font-size:11px;font-family:var(--mono);color:var(--muted);margin-top:3px;position:relative;z-index:1}
+.pcard.hot .pcard-price{color:var(--orange)}
+.pcard-ctr{display:flex;align-items:center;width:100%;background:var(--card2);border:1px solid var(--border2);border-radius:6px;overflow:hidden;margin-top:10px;position:relative;z-index:2}
+.pcc-btn{flex:1;height:28px;background:transparent;border:none;font-size:16px;font-weight:300;color:var(--white);cursor:pointer;transition:background 0.1s}
+.pcc-btn:active{background:var(--orange);color:#fff}
+.pcc-num{width:28px;text-align:center;font-family:var(--mono);font-size:13px;font-weight:500;border-left:1px solid var(--border2);border-right:1px solid var(--border2);height:28px;line-height:28px;background:var(--card2)}
+.pcard.hot .pcc-num{color:var(--orange)}
+
+/* COBRAR FIJO */
+.cobrar-fixed{position:fixed;bottom:60px;left:0;right:0;background:linear-gradient(to top,var(--bg) 60%,transparent);padding:16px 18px 12px;z-index:150}
+.cobrar-btn{width:100%;padding:16px 20px;background:var(--orange);border:none;border-radius:12px;font-family:var(--font);font-size:16px;font-weight:700;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:space-between;transition:all 0.1s}
+.cobrar-btn:active{background:#B84008;transform:scale(0.98)}
+.cobrar-btn:disabled{background:var(--card2);color:var(--muted2);cursor:not-allowed}
+.cb-l{display:flex;align-items:center;gap:8px}
+.cb-amt{font-family:var(--mono);font-size:20px;font-weight:500}
+
+/* SCREEN COBRO */
+.back-bar{display:flex;align-items:center;gap:8px;padding:14px 18px;background:var(--surface);border-bottom:1px solid var(--border);cursor:pointer;flex-shrink:0}
+.back-bar span{font-size:13px;color:var(--muted);font-weight:500}
+.cobro-hero{background:var(--card);padding:20px 18px;border-bottom:1px solid var(--border);flex-shrink:0}
+.ch-lbl{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px}
+.ch-amt{font-family:var(--mono);font-size:48px;font-weight:500;letter-spacing:-2px;line-height:1}
+
+.cobro-block{background:var(--card);border:1px solid var(--border);border-radius:12px;margin:14px 18px 0;overflow:hidden}
+.cobro-block-title{padding:11px 14px;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;border-bottom:1px solid var(--border)}
+.det-row{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border)}
+.det-row:last-child{border:none}
+.dr-l{display:flex;align-items:center;gap:10px}
+.dr-em{font-size:20px}
+.dr-name{font-size:13px;font-weight:700}
+.dr-qty{font-size:11px;font-family:var(--mono);color:var(--muted)}
+.dr-price{font-family:var(--mono);font-size:14px;font-weight:500}
+
+/* PAGO MIXTO (solo reservas) */
+.pago-block{background:var(--card);border:1px solid var(--border);border-radius:12px;margin:12px 18px 0;overflow:hidden}
+.pago-block-title{padding:11px 14px;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;border-bottom:1px solid var(--border)}
+.pago-field{padding:12px 14px;border-bottom:1px solid var(--border)}
+.pago-field:last-child{border:none}
+.pago-field-lbl{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px}
+.pago-input{width:100%;background:var(--card2);border:1.5px solid var(--border2);border-radius:8px;padding:12px 14px;font-family:var(--mono);font-size:22px;font-weight:500;color:var(--white);outline:none;transition:border-color 0.12s;-webkit-appearance:none}
+.pago-input:focus{border-color:var(--orange)}
+.pago-input::placeholder{color:var(--muted2)}
+.pago-status{margin:10px 18px 0;padding:12px 14px;background:var(--card2);border:1px solid var(--border);border-radius:8px;display:flex;align-items:center;justify-content:space-between}
+.ps-lbl{font-size:12px;color:var(--muted)}
+.ps-val{font-family:var(--mono);font-size:15px;font-weight:500}
+.ps-val.ok{color:var(--green)}
+.ps-val.warn{color:var(--orange)}
+.ps-val.err{color:var(--red)}
+
+/* METODO SIMPLE (solo productos/ADN) */
+.metodo-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px 18px 0}
+.metodo-opt{background:var(--card);border:2px solid var(--border);border-radius:12px;padding:16px 12px;text-align:center;cursor:pointer;transition:all 0.12s}
+.metodo-opt.sel{border-color:var(--orange);background:var(--orange-dim)}
+.metodo-opt:active{transform:scale(0.97)}
+.mo-emoji{font-size:28px;display:block;margin-bottom:6px}
+.mo-name{font-size:14px;font-weight:700;color:var(--white)}
+.mo-sub{font-size:11px;color:var(--muted);margin-top:2px}
+.metodo-opt.sel .mo-name{color:var(--orange)}
+
+.confirmar-btn{margin:14px 18px 20px;width:calc(100% - 36px);padding:16px;background:var(--orange);border:none;border-radius:12px;font-family:var(--font);font-size:16px;font-weight:700;color:#fff;cursor:pointer;transition:all 0.1s}
+.confirmar-btn:active{background:#B84008;transform:scale(0.98)}
+.confirmar-btn:disabled{background:var(--card2);color:var(--muted2);cursor:not-allowed}
+
+/* SCREEN CIERRE */
+.cierre-hero{background:var(--surface);padding:20px 18px 18px;border-bottom:1px solid var(--border)}
+.cher-tag{display:inline-block;background:var(--orange);color:#fff;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;padding:3px 10px;border-radius:4px;margin-bottom:10px}
+.cher-title{font-size:26px;font-weight:900;letter-spacing:-0.8px}
+.cher-date{font-size:12px;font-family:var(--mono);color:var(--muted);margin-top:4px}
+
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:14px 18px}
+.stat-box{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:13px 14px}
+.stat-lbl{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:5px}
+.stat-val{font-family:var(--mono);font-size:18px;font-weight:500}
+.stat-val.orange{color:var(--orange)}
+
+.c-block{background:var(--card);border:1px solid var(--border);border-radius:12px;margin:0 18px 12px;overflow:hidden}
+.c-block-title{padding:11px 14px;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;border-bottom:1px solid var(--border)}
+
+/* VENTA ROW CON ACCIONES */
+.vta-row{padding:12px 14px;border-bottom:1px solid var(--border)}
+.vta-row:last-child{border:none}
+.vta-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px}
+.vta-name{font-size:13px;font-weight:700}
+.vta-total{font-family:var(--mono);font-size:15px;font-weight:500;flex-shrink:0;margin-left:10px}
+.vta-items{font-size:12px;color:var(--muted);margin-bottom:6px}
+.vta-pills{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px}
+.split-pill{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:6px;font-size:13px;font-family:var(--mono);font-weight:700}
+.sp-sinpe{background:rgba(212,80,10,0.2);color:#FF8C5A;border:1px solid rgba(212,80,10,0.35)}
+.sp-ef{background:rgba(255,255,255,0.1);color:#F5F3F0;border:1px solid rgba(255,255,255,0.2)}
+.vta-actions{display:flex;gap:6px}
+.btn-edit{background:rgba(212,80,10,0.12);border:1px solid rgba(212,80,10,0.3);border-radius:6px;padding:4px 12px;font-size:11px;font-weight:700;color:var(--orange);cursor:pointer;font-family:var(--font)}
+.btn-del-vta{background:rgba(192,57,43,0.12);border:1px solid rgba(192,57,43,0.3);border-radius:6px;padding:4px 12px;font-size:11px;font-weight:700;color:var(--red);cursor:pointer;font-family:var(--font)}
+
+.vta-prod-row{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;border-bottom:1px solid var(--border)}
+.vta-prod-row:last-child{border:none}
+.vpl{display:flex;align-items:center;gap:8px}
+.vp-em{font-size:16px}
+.vp-name{font-size:13px;font-weight:600}
+.vp-qty{font-size:11px;font-family:var(--mono);color:var(--muted)}
+.vp-total{font-family:var(--mono);font-size:13px;font-weight:500}
+
+/* GASTOS */
+.gastos-wrap{padding:0 18px 12px}
+.gasto-item{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:8px}
+.gasto-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.gasto-num-lbl{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em}
+.btn-del-g{background:rgba(192,57,43,0.15);border:none;border-radius:6px;padding:4px 10px;font-size:11px;color:var(--red);font-weight:700;cursor:pointer;font-family:var(--font)}
+.g-input{width:100%;background:var(--card2);border:1.5px solid var(--border2);border-radius:8px;padding:11px 13px;font-family:var(--font);font-size:15px;color:var(--white);outline:none;margin-bottom:8px;-webkit-appearance:none}
+.g-input:focus{border-color:var(--orange)}
+.g-input::placeholder{color:var(--muted2)}
+.g-select{width:100%;background:var(--card2);border:1.5px solid var(--border2);border-radius:8px;padding:11px 13px;font-family:var(--font);font-size:15px;color:var(--white);outline:none;-webkit-appearance:none}
+.btn-add-gasto{width:100%;padding:13px;background:transparent;border:1.5px dashed var(--border2);border-radius:10px;font-family:var(--font);font-size:14px;font-weight:600;color:var(--muted);cursor:pointer;margin-bottom:12px}
+
+/* CAJA */
+.cinput-wrap{padding:0 18px;margin-bottom:8px}
+.cinput-lbl{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;display:block}
+.cinput{width:100%;background:var(--card);border:1.5px solid var(--border);border-radius:10px;padding:13px 14px;font-family:var(--mono);font-size:20px;font-weight:500;color:var(--white);outline:none;transition:border-color 0.12s;-webkit-appearance:none}
+.cinput:focus{border-color:var(--orange)}
+.diff-row-cierre{margin:0 18px 12px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;display:flex;align-items:center;justify-content:space-between}
+.diff-lbl{font-size:12px;color:var(--muted)}
+.diff-val{font-family:var(--mono);font-size:18px;font-weight:500}
+.diff-val.ok{color:var(--green)}
+.diff-val.warn{color:var(--orange)}
+.notas-wrap{padding:0 18px;margin-bottom:12px}
+.notas-ta{width:100%;background:var(--card);border:1.5px solid var(--border);border-radius:10px;padding:13px 14px;font-family:var(--font);font-size:14px;color:var(--white);outline:none;resize:none;height:72px}
+.caja-summary{background:var(--card);border:1px solid var(--border);border-radius:12px;margin:0 18px 12px;overflow:hidden}
+.cs-row{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--border)}
+.cs-row:last-child{border:none}
+.cs-lbl{font-size:13px;color:var(--muted)}
+.cs-val{font-family:var(--mono);font-size:16px;font-weight:500}
+.cs-row.total .cs-lbl{font-size:14px;font-weight:700;color:var(--white)}
+.cs-row.total .cs-val{font-size:20px;color:var(--orange)}
+.total-card-cierre{margin:0 18px 14px;background:var(--orange);border-radius:12px;padding:18px;display:flex;align-items:center;justify-content:space-between}
+.tc-lbl{font-size:11px;color:rgba(255,255,255,0.65);margin-bottom:4px}
+.tc-amt{font-family:var(--mono);font-size:30px;font-weight:500;color:#fff;letter-spacing:-1px}
+.enviar-btn{margin:0 18px 24px;width:calc(100% - 36px);padding:18px;background:var(--white);border:none;border-radius:12px;font-family:var(--font);font-size:16px;font-weight:700;color:var(--bg);cursor:pointer;transition:all 0.1s;display:flex;align-items:center;justify-content:center;gap:10px}
+.enviar-btn:active{background:#ddd;transform:scale(0.98)}
+.enviar-btn:disabled{background:var(--card2);color:var(--muted2);cursor:not-allowed}
+
+/* MERCADERIA */
+.inv-block{background:var(--card);border:1px solid var(--border);border-radius:12px;margin:0 18px 12px;overflow:hidden}
+.inv-row{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border)}
+.inv-row:last-child{border:none}
+.inv-name{font-size:14px;font-weight:700}
+.inv-name.low{color:var(--red)}
+.inv-sub{font-size:11px;color:var(--muted);margin-top:2px}
+.inv-sub.low{color:var(--red);font-weight:600}
+.inv-saving{font-size:10px;color:var(--muted);margin-top:2px;min-height:14px}
+.inv-ctrl{display:flex;align-items:center}
+.inv-btn{width:36px;height:36px;background:var(--card2);border:1px solid var(--border2);font-size:20px;font-weight:300;color:var(--white);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.1s}
+.inv-btn:first-child{border-radius:8px 0 0 8px}
+.inv-btn:last-child{border-radius:0 8px 8px 0}
+.inv-btn:active{background:var(--orange);border-color:var(--orange)}
+.inv-num{width:40px;height:36px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:16px;font-weight:500;background:var(--card2);border-top:1px solid var(--border2);border-bottom:1px solid var(--border2)}
+.inv-num.low{color:var(--red)}
+
+/* NAV */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);display:flex;z-index:200;padding-bottom:env(safe-area-inset-bottom)}
+.nav-btn{flex:1;padding:10px 0 12px;background:transparent;border:none;font-family:var(--font);font-size:10px;font-weight:700;color:var(--muted);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;text-transform:uppercase;letter-spacing:0.06em;transition:color 0.1s}
+.nav-btn.on{color:var(--orange)}
+.nav-icon{font-size:20px}
+
+.loading-overlay{position:fixed;inset:0;background:rgba(13,13,13,0.94);display:none;align-items:center;justify-content:center;flex-direction:column;gap:14px;z-index:999}
+.loading-overlay.show{display:flex}
+.spinner{width:36px;height:36px;border:2.5px solid var(--border2);border-top-color:var(--orange);border-radius:50%;animation:spin 0.7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-text{font-size:13px;color:var(--muted)}
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(16px);background:var(--card2);border:1px solid var(--border2);color:var(--white);padding:10px 20px;border-radius:6px;font-size:13px;font-weight:700;opacity:0;transition:all 0.25s;z-index:998;white-space:nowrap;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.ok{background:var(--green);border-color:var(--green)}
+.toast.err{background:var(--red);border-color:var(--red)}
+.empty-msg{padding:16px 14px;font-size:13px;color:var(--muted)}
+</style>
+</head>
+<body>
+
+<!-- ══ SCREEN VENTA ══ -->
+<div class="screen active" id="screen-venta">
+  <div class="header">
+    <div class="hdr-left">
+      <img src="https://mzo10.github.io/redarena-admin/logored2.png" class="hdr-logo" alt="" onerror="this.style.display='none'">
+      <div>
+        <div class="hdr-brand">Red Arena</div>
+        <div class="hdr-sub" id="chip-wrap">Punto de venta</div>
+      </div>
+    </div>
+    <div class="hdr-date-block">
+      <div class="hdr-dayname" id="hdr-dayname"></div>
+      <div class="hdr-datenum" id="hdr-datenum"></div>
+      <div class="hdr-monthyear" id="hdr-monthyear"></div>
+    </div>
+  </div>
+  <div class="total-bar">
+    <div><div class="tb-lbl">Total a cobrar</div><div class="tb-amount" id="total-display">₡0</div></div>
+    <div class="tb-items">Items: <strong id="items-count">0</strong></div>
+  </div>
+  <div class="scroll-area">
+    <div class="slbl">Reservas & academia</div>
+    <div class="reservas-block">
+      <div class="res-row">
+        <div><div class="res-name">⚽ Reserva particular</div><div class="res-price">₡25.000 / hora</div></div>
+        <div class="rctrl">
+          <button class="rctrl-btn" onclick="chgR('res',-1);event.stopPropagation()">−</button>
+          <div class="rctrl-num" id="rn-res">0</div>
+          <button class="rctrl-btn" onclick="chgR('res',1);event.stopPropagation()">+</button>
+        </div>
+      </div>
+      <div class="res-row">
+        <div><div class="res-name">🎓 Sesión ADN</div><div class="res-price">₡22.000 / sesión</div></div>
+        <div class="rctrl">
+          <button class="rctrl-btn" onclick="chgR('adn',-1);event.stopPropagation()">−</button>
+          <div class="rctrl-num" id="rn-adn">0</div>
+          <button class="rctrl-btn" onclick="chgR('adn',1);event.stopPropagation()">+</button>
+        </div>
+      </div>
+    </div>
+    <div class="slbl">Productos</div>
+    <div class="pgrid" id="pgrid"></div>
+    <div style="height:120px"></div>
+  </div>
+  <div class="cobrar-fixed" id="cobrar-fixed">
+    <button class="cobrar-btn" id="cobrar-btn" onclick="accionCobrar()" disabled>
+      <span class="cb-l" id="cobrar-lbl">💳 Cobrar</span>
+      <span class="cb-amt" id="cobrar-amt">₡0</span>
+    </button>
+  </div>
+</div>
+
+<!-- ══ SCREEN COBRO ══ -->
+<div class="screen" id="screen-cobro">
+  <div class="back-bar" onclick="cancelarCobro()"><span>← Volver a venta</span></div>
+  <div class="cobro-hero">
+    <div class="ch-lbl">Total de la venta</div>
+    <div class="ch-amt" id="cobro-total">₡0</div>
+  </div>
+  <div class="scroll-area" style="padding-bottom:120px">
+    <div class="cobro-block" id="cobro-detalle"><div class="cobro-block-title">Detalle</div></div>
+    <!-- Pago mixto: solo cuando hay reservas -->
+    <div id="pago-mixto-wrap"></div>
+    <!-- Pago simple: solo cuando NO hay reservas -->
+    <div id="pago-simple-wrap"></div>
+    <div class="pago-status" id="pago-status" style="display:none">
+      <div class="ps-lbl">Falta por asignar</div>
+      <div class="ps-val warn" id="ps-val">₡0</div>
+    </div>
+  </div>
+  <button class="confirmar-btn" id="confirmar-btn" onclick="confirmarVenta()" disabled>Confirmar venta →</button>
+</div>
+
+<!-- ══ SCREEN CIERRE ══ -->
+<div class="screen" id="screen-cierre">
+  <div class="scroll-area">
+    <div class="cierre-hero">
+      <div class="cher-tag">Cierre del día</div>
+      <div class="cher-title">Resumen</div>
+      <div class="cher-date" id="cierre-fecha"></div>
+    </div>
+    <div class="stat-grid">
+      <div class="stat-box"><div class="stat-lbl">SINPE del día</div><div class="stat-val orange" id="cs-sinpe">₡0</div></div>
+      <div class="stat-box"><div class="stat-lbl">Efectivo del día</div><div class="stat-val" id="cs-efectivo">₡0</div></div>
+      <div class="stat-box"><div class="stat-lbl">Reservas</div><div class="stat-val" id="cs-reservas">0</div></div>
+      <div class="stat-box"><div class="stat-lbl">Sesiones ADN</div><div class="stat-val" id="cs-adn">0</div></div>
+    </div>
+
+    <!-- Ventas del día con editar/eliminar -->
+    <div class="c-block">
+      <div class="c-block-title">Ventas del día</div>
+      <div id="lista-ventas"><div class="empty-msg">Sin ventas registradas aún</div></div>
+    </div>
+
+    <!-- Productos acumulados -->
+    <div class="c-block">
+      <div class="c-block-title">Productos vendidos</div>
+      <div id="cierre-prods"><div class="empty-msg">Sin productos aún</div></div>
+    </div>
+
+    <!-- Gastos -->
+    <div class="slbl" style="padding-top:4px">Gastos del día</div>
+    <div class="gastos-wrap">
+      <div id="gastos-lista-cierre"></div>
+      <button class="btn-add-gasto" onclick="agregarGasto()">+ Agregar gasto</button>
+    </div>
+
+    <!-- Cierre de caja -->
+    <div class="slbl" style="padding-top:0">Cierre de caja</div>
+    <div class="cinput-wrap">
+      <label class="cinput-lbl">Total recibido por SINPE</label>
+      <input type="number" class="cinput" id="inp-sinpe" placeholder="0" inputmode="numeric" oninput="calcDiff()">
+    </div>
+    <div class="cinput-wrap">
+      <label class="cinput-lbl">Total en efectivo en caja</label>
+      <input type="number" class="cinput" id="inp-efectivo" placeholder="0" inputmode="numeric" oninput="calcDiff()">
+    </div>
+    <div class="caja-summary">
+      <div class="cs-row"><div class="cs-lbl">Ventas SINPE registradas</div><div class="cs-val" id="caja-sinpe">₡0</div></div>
+      <div class="cs-row"><div class="cs-lbl">Ventas efectivo registradas</div><div class="cs-val" id="caja-ef">₡0</div></div>
+      <div class="cs-row total"><div class="cs-lbl">Total del día</div><div class="cs-val" id="caja-total">₡0</div></div>
+    </div>
+    <div class="diff-row-cierre">
+      <div class="diff-lbl">Diferencia vs ventas calculadas</div>
+      <div class="diff-val ok" id="diff-display">₡0 ✓</div>
+    </div>
+    <div class="notas-wrap">
+      <label class="cinput-lbl">Notas del día</label>
+      <textarea class="notas-ta" id="inp-notas" placeholder="Observaciones, incidencias..."></textarea>
+    </div>
+    <div class="total-card-cierre">
+      <div><div class="tc-lbl">Ventas calculadas del día</div><div class="tc-amt" id="tc-total">₡0</div></div>
+      <span style="font-size:32px">🏟️</span>
+    </div>
+    <button class="enviar-btn" id="enviar-btn" onclick="enviarCierre()"><span>📤</span> Enviar cierre del día</button>
+  </div>
+</div>
+
+<!-- ══ SCREEN MERCADERIA ══ -->
+<div class="screen" id="screen-mercaderia">
+  <div class="header">
+    <div class="hdr-left">
+      <img src="https://mzo10.github.io/redarena-admin/logored2.png" class="hdr-logo" alt="" onerror="this.style.display='none'">
+      <div><div class="hdr-brand">Mercadería</div><div class="hdr-sub">Inventario actual</div></div>
+    </div>
+  </div>
+  <div class="scroll-area">
+    <div class="slbl">Stock de productos</div>
+    <div class="inv-block" id="inv-block"></div>
+    <div style="margin:0 18px 20px;padding:14px;background:var(--card);border:1px solid var(--border);border-radius:10px">
+      <p style="font-size:12px;color:var(--muted);text-align:center;line-height:1.6">Los cambios se guardan automáticamente.</p>
+    </div>
+  </div>
+</div>
+
+<!-- NAV -->
+<div class="bottom-nav" id="bnav">
+  <button class="nav-btn on" id="nav-venta" onclick="goScreen('venta')"><span class="nav-icon">🛒</span>Venta</button>
+  <button class="nav-btn" id="nav-cierre" onclick="goScreen('cierre')"><span class="nav-icon">📋</span>Cierre</button>
+  <button class="nav-btn" id="nav-mercaderia" onclick="goScreen('mercaderia')"><span class="nav-icon">📦</span>Mercadería</button>
+</div>
+
+<div class="loading-overlay" id="loading"><div class="spinner"></div><div class="loading-text">Enviando cierre...</div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const API="https://script.google.com/macros/s/AKfycby1l06F0BHWsJDC0zATu29aOMRRhCJash1uWIwupF1k4Vjg_KDwRiemU9SEDV0jPOOrRA/exec";
+
+const PRODS=[
+  {id:"gatorades",   name:"Gatorade",    invId:"Gatorades",   emoji:"🟡",price:1400},
+  {id:"aguas",       name:"Agua",         invId:"Aguas",        emoji:"💧",price:800},
+  {id:"snacks",      name:"Snack",        invId:"Snacks",       emoji:"🍿",price:350},
+  {id:"gaseosas",    name:"Gaseosa",      invId:"Gaseosas",     emoji:"🥤",price:1000},
+  {id:"tes",         name:"Té frío",      invId:"Tes",          emoji:"🧊",price:1000},
+  {id:"helados",     name:"Helado",       invId:"Helados",      emoji:"🍦",price:1000},
+  {id:"partidosPlay",name:"Partido Play", invId:"PartidosPlay", emoji:"🎮",price:1500},
+];
+
+let qty={}, nRes=0, nAdn=0, ventasCount=0;
+let txns=[]; // [{id, items, sinpe, efectivo, total, metodo}]
+let editandoTxnId=null; // si estamos editando una venta existente
+let stock={};
+let gastoNum=0, gastosActivos=[], saveTimers={};
+PRODS.forEach(p=>qty[p.id]=0);
+
+const col=n=>"₡"+Math.round(n||0).toLocaleString("es-CR");
+
+// ── FECHA ──
+function setFecha(){
+  const d=new Date();
+  const ds=["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
+  const ms=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+  document.getElementById("hdr-dayname").textContent=ds[d.getDay()];
+  document.getElementById("hdr-datenum").textContent=d.getDate();
+  document.getElementById("hdr-monthyear").textContent=ms[d.getMonth()]+" "+d.getFullYear();
+  document.getElementById("cierre-fecha").textContent=ds[d.getDay()]+" "+d.getDate()+" de "+ms[d.getMonth()]+" "+d.getFullYear();
+}
+
+// ── GRID ──
+function renderGrid(){
+  const g=document.getElementById("pgrid"); g.innerHTML="";
+  PRODS.forEach(p=>{
+    const q=qty[p.id], hot=q>0?"hot":"";
+    const s=stock[p.invId]||0, low=s<=10;
+    g.innerHTML+=`
+    <div class="pcard ${hot}" id="card-${p.id}" onclick="addP('${p.id}')">
+      <div class="pcard-bign" id="big-${p.id}">${q||""}</div>
+      <div class="pcard-emoji">${p.emoji}</div>
+      <div class="pcard-name">${p.name}</div>
+      <div class="pcard-price">${col(p.price)}${low?'<br><span style="color:var(--red);font-size:9px">stock bajo</span>':''}</div>
+      <div class="pcard-ctr" onclick="event.stopPropagation()">
+        <button class="pcc-btn" onclick="chgP('${p.id}',-1)">−</button>
+        <div class="pcc-num" id="pn-${p.id}">${q}</div>
+        <button class="pcc-btn" onclick="chgP('${p.id}',1)">+</button>
+      </div>
+    </div>`;
+  });
+  updTotal();
+}
+
+function addP(id){qty[id]++; updCard(id); updTotal();}
+function chgP(id,d){qty[id]=Math.max(0,qty[id]+d); updCard(id); updTotal();}
+
+function updCard(id){
+  const p=PRODS.find(x=>x.id===id);
+  const q=qty[id];
+  const c=document.getElementById("card-"+id);
+  const n=document.getElementById("pn-"+id);
+  const b=document.getElementById("big-"+id);
+  if(c) c.className="pcard"+(q>0?" hot":"");
+  if(n) n.textContent=q;
+  if(b) b.textContent=q>0?q:"";
+}
+
+function chgR(type,d){
+  if(type==="res") nRes=Math.max(0,nRes+d);
+  else nAdn=Math.max(0,nAdn+d);
+  const v=type==="res"?nRes:nAdn;
+  const el=document.getElementById("rn-"+type);
+  if(el){el.textContent=v; el.className="rctrl-num"+(v>0?" hot":"");}
+  updTotal();
+}
+
+function calcT(){
+  // ADN es crédito, no suma al total a cobrar
+  let t=nRes*25000;
+  PRODS.forEach(p=>t+=qty[p.id]*p.price);
+  return t;
+}
+function calcItems(){let n=nRes; PRODS.forEach(p=>n+=qty[p.id]); return n;}
+// ADN solo para conteo en cierre
+function calcAdnOnly(){return nAdn>0 && nRes===0 && PRODS.every(p=>qty[p.id]===0);}
+function calcHasFacturable(){return calcT()>0;}
+
+function updTotal(){
+  const t=calcT(), items=calcItems();
+  const el=document.getElementById("total-display");
+  el.textContent=col(t);
+  el.classList.remove("pulse"); void el.offsetWidth; el.classList.add("pulse");
+  setTimeout(()=>el.classList.remove("pulse"),250);
+  document.getElementById("items-count").textContent=items;
+  document.getElementById("cobrar-amt").textContent=col(t);
+  // Si solo hay ADN, habilitar botón como "Agregar"
+  const soloADN = nAdn>0 && t===0;
+  const btn=document.getElementById("cobrar-btn");
+  btn.disabled = (t===0 && nAdn===0);
+  const lbl=document.getElementById("cobrar-lbl");
+  const amt=document.getElementById("cobrar-amt");
+  if(soloADN){
+    if(lbl) lbl.textContent="✓ Agregar ADN";
+    if(amt) amt.textContent=nAdn+" sesión"+(nAdn>1?"es":"");
+  } else {
+    if(lbl) lbl.textContent="💳 Cobrar";
+    if(amt) amt.textContent=col(t);
+  }
+}
+
+// ── ACCION COBRAR / AGREGAR ──
+function accionCobrar(){
+  const soloADN = nAdn>0 && calcT()===0;
+  if(soloADN){
+    // Agregar ADN directo sin cobro
+    const id=Date.now();
+    txns.push({id, items:[{id:"adn",emoji:"🎓",name:"Sesión ADN (crédito)",qty:nAdn,price:0}], sinpe:0, efectivo:0, total:0, metodo:"Crédito", esADN:true});
+    ventasCount++;
+    nAdn=0;
+    document.getElementById("rn-adn").textContent="0";
+    document.getElementById("rn-adn").className="rctrl-num";
+    renderGrid();
+    const cw=document.getElementById("chip-wrap");
+    const vc=txns.length;
+    cw.innerHTML=`Punto de venta &nbsp;<span class="chip">✓ ${vc} registro${vc>1?"s":""}</span>`;
+    document.getElementById("inp-sinpe").value=txns.reduce((a,t)=>a+t.sinpe,0)||"";
+    document.getElementById("inp-efectivo").value=txns.reduce((a,t)=>a+t.efectivo,0)||"";
+    updCierre();
+    showToast("✓ "+nAdn+" sesión ADN registrada","ok");
+    return;
+  }
+  irACobro();
+}
+
+function irACobro(){
+  if(calcT()===0) return;
+  // Detalle
+  let html="";
+  if(nRes>0) html+=detRow("⚽","Reserva particular",nRes,25000);
+  // ADN no aparece en cobro — es crédito
+  PRODS.forEach(p=>{if(qty[p.id]>0) html+=detRow(p.emoji,p.name,qty[p.id],p.price);});
+  // Si hay ADN además, mostrar nota
+  if(nAdn>0) html+=`<div style="padding:10px 14px;font-size:12px;color:var(--orange);border-top:1px solid var(--border)">🎓 ${nAdn} sesión${nAdn>1?"es":""} ADN se registrarán como crédito</div>`;
+  document.getElementById("cobro-detalle").innerHTML=`<div class="cobro-block-title">Detalle de la venta</div>${html}`;
+  document.getElementById("cobro-total").textContent=col(calcT());
+
+  const tieneReservas = nRes>0;
+
+  if(tieneReservas){
+    // Pago mixto: SINPE + efectivo
+    document.getElementById("pago-mixto-wrap").innerHTML=`
+      <div class="pago-block">
+        <div class="pago-block-title">Forma de pago</div>
+        <div class="pago-field">
+          <div class="pago-field-lbl">📱 Monto SINPE</div>
+          <input type="number" class="pago-input" id="pago-sinpe" placeholder="0" inputmode="numeric" oninput="calcPagoMixto()">
+        </div>
+        <div class="pago-field">
+          <div class="pago-field-lbl">💵 Monto efectivo</div>
+          <input type="number" class="pago-input" id="pago-efectivo" placeholder="0" inputmode="numeric" oninput="calcPagoMixto()">
+        </div>
+      </div>`;
+    document.getElementById("pago-simple-wrap").innerHTML="";
+    document.getElementById("pago-status").style.display="flex";
+    document.getElementById("confirmar-btn").disabled=true;
+    calcPagoMixto();
+  } else {
+    // Pago simple: elige uno
+    document.getElementById("pago-mixto-wrap").innerHTML="";
+    document.getElementById("pago-simple-wrap").innerHTML=`
+      <div class="metodo-grid">
+        <div class="metodo-opt" id="mopt-sinpe" onclick="selMetodo('sinpe')">
+          <span class="mo-emoji">📱</span>
+          <span class="mo-name">SINPE</span>
+          <span class="mo-sub">Transferencia</span>
+        </div>
+        <div class="metodo-opt" id="mopt-efectivo" onclick="selMetodo('efectivo')">
+          <span class="mo-emoji">💵</span>
+          <span class="mo-name">Efectivo</span>
+          <span class="mo-sub">Billetes y monedas</span>
+        </div>
+      </div>`;
+    document.getElementById("pago-status").style.display="none";
+    document.getElementById("confirmar-btn").disabled=true;
+  }
+
+  goScreen("cobro");
+}
+
+function detRow(em,name,q,p){
+  return `<div class="det-row"><div class="dr-l"><span class="dr-em">${em}</span><div><div class="dr-name">${name}</div><div class="dr-qty">${q} × ${col(p)}</div></div></div><div class="dr-price">${col(q*p)}</div></div>`;
+}
+
+function calcPagoMixto(){
+  const s=Number(document.getElementById("pago-sinpe").value)||0;
+  const e=Number(document.getElementById("pago-efectivo").value)||0;
+  const total=calcT(), diff=total-(s+e);
+  const el=document.getElementById("ps-val");
+  const lbl=document.querySelector("#pago-status .ps-lbl");
+  if(Math.abs(diff)<=1){
+    el.textContent="✓ Completo"; el.className="ps-val ok";
+    lbl.textContent="Pago cubierto";
+    document.getElementById("confirmar-btn").disabled=false;
+  } else if(diff>0){
+    el.textContent=col(diff)+" pendiente"; el.className="ps-val warn";
+    lbl.textContent="Falta por asignar";
+    document.getElementById("confirmar-btn").disabled=true;
+  } else {
+    el.textContent=col(Math.abs(diff))+" de más"; el.className="ps-val err";
+    lbl.textContent="Excede el total";
+    document.getElementById("confirmar-btn").disabled=true;
+  }
+}
+
+function selMetodo(m){
+  ["sinpe","efectivo"].forEach(x=>{
+    const el=document.getElementById("mopt-"+x);
+    if(el) el.className="metodo-opt"+(x===m?" sel":"");
+  });
+  document.getElementById("confirmar-btn").disabled=false;
+  document.getElementById("confirmar-btn").dataset.metodo=m;
+}
+
+function cancelarCobro(){
+  // Si estaba editando, restaurar estado anterior
+  if(editandoTxnId!==null){
+    const txn=txns.find(t=>t.id===editandoTxnId);
+    if(txn){
+      // Restaurar cantidades de la venta que se estaba editando
+      PRODS.forEach(p=>qty[p.id]=0); nRes=0; nAdn=0;
+      txn.items.forEach(it=>{
+        if(it.id==="res") nRes=it.qty;
+        else if(it.id==="adn") nAdn=it.qty;
+        else qty[it.id]=it.qty;
+      });
+      renderGrid();
+      document.getElementById("rn-res").textContent=nRes;
+      document.getElementById("rn-res").className="rctrl-num"+(nRes>0?" hot":"");
+      document.getElementById("rn-adn").textContent=nAdn;
+      document.getElementById("rn-adn").className="rctrl-num"+(nAdn>0?" hot":"");
+      // Devolver la venta al acumulado
+      txns.push(txn);
+      txns=txns.filter((t,i,arr)=>arr.indexOf(t)===i);
+    }
+    editandoTxnId=null;
+  }
+  goScreen("venta");
+}
+
+function confirmarVenta(){
+  const total=calcT();
+  let sinpePago=0, efectivoPago=0, metodoLabel="";
+  const tieneReservas=nRes>0;
+
+  if(tieneReservas){
+    sinpePago=Number(document.getElementById("pago-sinpe").value)||0;
+    efectivoPago=Number(document.getElementById("pago-efectivo").value)||0;
+    metodoLabel=sinpePago>0&&efectivoPago>0?"Mixto":sinpePago>0?"SINPE":"Efectivo";
+  } else {
+    const m=document.getElementById("confirmar-btn").dataset.metodo;
+    if(m==="sinpe"){sinpePago=total; metodoLabel="SINPE";}
+    else{efectivoPago=total; metodoLabel="Efectivo";}
+  }
+
+  // Construir items — ADN sin precio (crédito)
+  const items=[];
+  if(nRes>0) items.push({id:"res",emoji:"⚽",name:"Reserva particular",qty:nRes,price:25000});
+  if(nAdn>0) items.push({id:"adn",emoji:"🎓",name:"Sesión ADN (crédito)",qty:nAdn,price:0});
+  PRODS.forEach(p=>{if(qty[p.id]>0) items.push({id:p.id,emoji:p.emoji,name:p.name,qty:qty[p.id],price:p.price});});
+
+  if(editandoTxnId!==null){
+    // Reemplazar la transacción editada
+    const idx=txns.findIndex(t=>t.id===editandoTxnId);
+    if(idx>=0) txns[idx]={id:editandoTxnId,items,sinpe:sinpePago,efectivo:efectivoPago,total,metodo:metodoLabel};
+    editandoTxnId=null;
+  } else {
+    // Nueva transacción
+    const id=Date.now();
+    txns.push({id,items,sinpe:sinpePago,efectivo:efectivoPago,total,metodo:metodoLabel});
+    ventasCount++;
+  }
+
+  // Reset venta
+  PRODS.forEach(p=>qty[p.id]=0); nRes=0; nAdn=0;
+  document.getElementById("rn-res").textContent="0"; document.getElementById("rn-res").className="rctrl-num";
+  document.getElementById("rn-adn").textContent="0"; document.getElementById("rn-adn").className="rctrl-num";
+  renderGrid();
+
+  // Chip
+  const cw=document.getElementById("chip-wrap");
+  const vc=txns.length;
+  cw.innerHTML=`Punto de venta &nbsp;<span class="chip">✓ ${vc} venta${vc>1?"s":""}</span>`;
+
+  // Pre-fill cierre
+  const totSinpe=txns.reduce((a,t)=>a+t.sinpe,0);
+  const totEf=txns.reduce((a,t)=>a+t.efectivo,0);
+  document.getElementById("inp-sinpe").value=totSinpe||"";
+  document.getElementById("inp-efectivo").value=totEf||"";
+
+  updCierre();
+  showToast(editandoTxnId!==null?"Venta actualizada":"✓ Venta registrada — "+col(total),"ok");
+  goScreen("venta");
+}
+
+// ── EDITAR / ELIMINAR VENTA ──
+function editarVenta(id){
+  const txn=txns.find(t=>t.id===id);
+  if(!txn) return;
+  // Quitar del acumulado temporalmente
+  txns=txns.filter(t=>t.id!==id);
+  editandoTxnId=id;
+  // Cargar items en la pantalla de venta
+  PRODS.forEach(p=>qty[p.id]=0); nRes=0; nAdn=0;
+  txn.items.forEach(it=>{
+    if(it.id==="res") nRes=it.qty;
+    else if(it.id==="adn") nAdn=it.qty;
+    else qty[it.id]=it.qty;
+  });
+  document.getElementById("rn-res").textContent=nRes;
+  document.getElementById("rn-res").className="rctrl-num"+(nRes>0?" hot":"");
+  document.getElementById("rn-adn").textContent=nAdn;
+  document.getElementById("rn-adn").className="rctrl-num"+(nAdn>0?" hot":"");
+  renderGrid();
+  updCierre();
+  goScreen("venta");
+  showToast("Editando venta — modificá y cobrá","");
+}
+
+function eliminarVenta(id){
+  txns=txns.filter(t=>t.id!==id);
+  const vc=txns.length;
+  const cw=document.getElementById("chip-wrap");
+  cw.innerHTML=vc>0?`Punto de venta &nbsp;<span class="chip">✓ ${vc} venta${vc>1?"s":""}</span>`:"Punto de venta";
+  const totSinpe=txns.reduce((a,t)=>a+t.sinpe,0);
+  const totEf=txns.reduce((a,t)=>a+t.efectivo,0);
+  document.getElementById("inp-sinpe").value=totSinpe||"";
+  document.getElementById("inp-efectivo").value=totEf||"";
+  updCierre();
+  showToast("Venta eliminada","");
+}
+
+// ── CIERRE ──
+function recalcDia(){
+  return {
+    sinpe:txns.reduce((a,t)=>a+t.sinpe,0),
+    efectivo:txns.reduce((a,t)=>a+t.efectivo,0),
+    reservas:txns.reduce((a,t)=>a+t.items.filter(i=>i.id==="res").reduce((b,i)=>b+i.qty,0),0),
+    adn:txns.reduce((a,t)=>a+t.items.filter(i=>i.id==="adn").reduce((b,i)=>b+i.qty,0),0),
+    prods:PRODS.reduce((o,p)=>{o[p.id]=txns.reduce((a,t)=>a+t.items.filter(i=>i.id===p.id).reduce((b,i)=>b+i.qty,0),0); return o;},{}),
+    adnCredito:txns.reduce((a,t)=>a+t.items.filter(i=>i.id==="adn").reduce((b,i)=>b+i.qty,0),0)
+  };
+}
+
+function updCierre(){
+  const dia=recalcDia();
+  document.getElementById("cs-sinpe").textContent=col(dia.sinpe);
+  document.getElementById("cs-efectivo").textContent=col(dia.efectivo);
+  document.getElementById("cs-reservas").textContent=dia.reservas;
+  document.getElementById("cs-adn").textContent=dia.adn+" (crédito)";
+
+  // Ventas con editar/eliminar
+  let vh="";
+  txns.forEach((txn,i)=>{
+    const itemsHtml=txn.items.map(it=>`<span style="font-size:12px;color:var(--muted)">${it.emoji} ${it.name} ×${it.qty}</span>`).join(" · ");
+    vh+=`<div class="vta-row">
+      <div class="vta-top">
+        <div class="vta-name">Venta ${i+1}</div>
+        <div class="vta-total">${col(txn.total)}</div>
+      </div>
+      <div class="vta-items">${itemsHtml}</div>
+      <div class="vta-pills">
+        ${txn.esADN?`<span class="split-pill" style="background:rgba(212,80,10,0.2);color:#FF8C5A;border:1px solid rgba(212,80,10,0.35);padding:6px 12px;font-size:13px;font-weight:700">🎓 Crédito ADN</span>`:""}
+        ${!txn.esADN && txn.sinpe>0?`<span class="split-pill sp-sinpe">📱 SINPE</span>`:""}
+        ${!txn.esADN && txn.efectivo>0?`<span class="split-pill sp-ef">💵 Efectivo</span>`:""}
+      </div>
+      <div class="vta-actions">
+        <button class="btn-edit" onclick="editarVenta(${txn.id})">✏️ Editar</button>
+        <button class="btn-del-vta" onclick="eliminarVenta(${txn.id})">🗑 Eliminar</button>
+      </div>
+    </div>`;
+  });
+  document.getElementById("lista-ventas").innerHTML=vh||'<div class="empty-msg">Sin ventas registradas aún</div>';
+
+  // Productos acumulados
+  let ph="", hay=false;
+  PRODS.forEach(p=>{
+    const q=dia.prods[p.id]||0;
+    if(q>0){hay=true; ph+=`<div class="vta-prod-row"><div class="vpl"><span class="vp-em">${p.emoji}</span><div><div class="vp-name">${p.name}</div><div class="vp-qty">${q} uds × ${col(p.price)}</div></div></div><div class="vp-total">${col(q*p.price)}</div></div>`;}
+  });
+  document.getElementById("cierre-prods").innerHTML=hay?ph:'<div class="empty-msg">Sin productos aún</div>';
+
+  // Caja
+  document.getElementById("caja-sinpe").textContent=col(dia.sinpe);
+  document.getElementById("caja-ef").textContent=col(dia.efectivo);
+  document.getElementById("caja-total").textContent=col(dia.sinpe+dia.efectivo);
+  document.getElementById("tc-total").textContent=col(calcEsp(dia));
+  calcDiff();
+}
+
+function calcEsp(dia){
+  if(!dia) dia=recalcDia();
+  let t=dia.reservas*25000+dia.adn*22000;
+  PRODS.forEach(p=>t+=(dia.prods[p.id]||0)*p.price);
+  return t;
+}
+
+function calcDiff(){
+  const s=Number(document.getElementById("inp-sinpe").value)||0;
+  const e=Number(document.getElementById("inp-efectivo").value)||0;
+  const esp=calcEsp(), diff=(s+e)-esp;
+  const el=document.getElementById("diff-display");
+  if(Math.abs(diff)<=100){el.textContent="₡0 ✓ Cuadra"; el.className="diff-val ok";}
+  else{el.textContent=col(Math.abs(diff))+" "+(diff>0?"sobrante":"faltante"); el.className="diff-val warn";}
+}
+
+// ── GASTOS ──
+function agregarGasto(){
+  gastoNum++;
+  const n=gastoNum;
+  gastosActivos.push(n);
+  const div=document.createElement("div");
+  div.className="gasto-item"; div.id="gasto-"+n;
+  div.innerHTML=`
+    <div class="gasto-top"><span class="gasto-num-lbl">Gasto ${n}</span><button class="btn-del-g" onclick="eliminarGasto(${n})">Eliminar</button></div>
+    <input class="g-input" type="text" id="gdesc-${n}" placeholder="Descripción">
+    <input class="g-input" type="number" id="gmonto-${n}" placeholder="Monto en colones" inputmode="numeric">
+    <select class="g-select" id="gmetodo-${n}"><option value="SINPE">SINPE</option><option value="Efectivo">Efectivo</option></select>`;
+  document.getElementById("gastos-lista-cierre").appendChild(div);
+}
+
+function eliminarGasto(n){
+  const el=document.getElementById("gasto-"+n);
+  if(el) el.remove();
+  gastosActivos=gastosActivos.filter(x=>x!==n);
+}
+
+// ── ENVIAR CIERRE ──
+function enviarCierre(){
+  const dia=recalcDia();
+  const s=Number(document.getElementById("inp-sinpe").value)||0;
+  const e=Number(document.getElementById("inp-efectivo").value)||0;
+  const notas=document.getElementById("inp-notas").value;
+  const esp=calcEsp(dia), diff=(s+e)-esp;
+  const gastos=[];
+  gastosActivos.forEach(n=>{
+    const desc=document.getElementById("gdesc-"+n);
+    const monto=document.getElementById("gmonto-"+n);
+    const metodo=document.getElementById("gmetodo-"+n);
+    if(desc&&monto&&desc.value&&monto.value) gastos.push({descripcion:desc.value,monto:monto.value,metodo:metodo.value});
+  });
+  const detalle=txns.map((t,i)=>`Venta ${i+1}: ${t.items.map(it=>`${it.name}×${it.qty}`).join(",")} | SINPE:${col(t.sinpe)} Efec:${col(t.efectivo)}`).join("\n");
+  const datos={
+    accion:"cierre",
+    reservasParticulares:dia.reservas, sesionesADN:dia.adn,
+    gatorades:dia.prods.gatorades||0, aguas:dia.prods.aguas||0,
+    snacks:dia.prods.snacks||0, gaseosas:dia.prods.gaseosas||0,
+    tes:dia.prods.tes||0, helados:dia.prods.helados||0,
+    partidosPlay:dia.prods.partidosPlay||0,
+    totalSinpe:s, efectivoCaja:e,
+    ventasEsperadas:esp, diferencia:diff,
+    notas:notas+(detalle?"\n\nDetalle ventas:\n"+detalle:""),
+    gastos
+  };
+  document.getElementById("loading").classList.add("show");
+  document.getElementById("enviar-btn").disabled=true;
+  fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(datos)})
+  .then(r=>r.json()).then(res=>{
+    document.getElementById("loading").classList.remove("show");
+    if(res.ok){showToast("✓ Cierre enviado","ok"); setTimeout(()=>document.getElementById("enviar-btn").disabled=false,4000);}
+    else{showToast("Error: "+(res.error||"?"),"err"); document.getElementById("enviar-btn").disabled=false;}
+  }).catch(()=>{
+    document.getElementById("loading").classList.remove("show");
+    showToast("Sin conexión","err");
+    document.getElementById("enviar-btn").disabled=false;
+  });
+}
+
+// ── MERCADERÍA ──
+function renderInventario(){
+  const block=document.getElementById("inv-block");
+  block.innerHTML=PRODS.map((p,i)=>{
+    const s=stock[p.invId]||0, low=s<=10;
+    return `<div class="inv-row"${i===0?' style="border-top:none"':''}>
+      <div>
+        <div class="inv-name${low?" low":""}">${p.emoji} ${p.name}</div>
+        <div class="inv-sub${low?" low":""}">${low?"⚠️ Stock bajo":"En stock"}</div>
+        <div class="inv-saving" id="invstatus-${p.invId}"></div>
+      </div>
+      <div class="inv-ctrl">
+        <button class="inv-btn" onclick="chgStock('${p.invId}',-1)">−</button>
+        <div class="inv-num${low?" low":""}" id="inv-${p.invId}">${s}</div>
+        <button class="inv-btn" onclick="chgStock('${p.invId}',1)">+</button>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function chgStock(invId,d){
+  const nuevo=Math.max(0,(stock[invId]||0)+d);
+  stock[invId]=nuevo;
+  const el=document.getElementById("inv-"+invId);
+  const low=nuevo<=10;
+  if(el){el.textContent=nuevo; el.className="inv-num"+(low?" low":"");}
+  const st=document.getElementById("invstatus-"+invId);
+  if(st) st.textContent="Guardando...";
+  clearTimeout(saveTimers[invId]);
+  saveTimers[invId]=setTimeout(()=>guardarStock(invId,nuevo),800);
+}
+
+function guardarStock(invId,cantidad){
+  fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({accion:"actualizarStock",producto:invId,cantidad})})
+  .then(r=>r.json()).then(()=>{
+    const st=document.getElementById("invstatus-"+invId);
+    if(st){st.textContent="Guardado ✓"; setTimeout(()=>{if(st)st.textContent="";},2000);}
+  }).catch(()=>{
+    const st=document.getElementById("invstatus-"+invId);
+    if(st) st.textContent="Error al guardar";
+  });
+}
+
+// ── NAV ──
+function goScreen(name){
+  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+  document.getElementById("screen-"+name).classList.add("active");
+  document.querySelectorAll(".nav-btn").forEach(b=>b.classList.remove("on"));
+  const nb=document.getElementById("nav-"+name);
+  if(nb) nb.classList.add("on");
+  const cf=document.getElementById("cobrar-fixed");
+  if(cf) cf.style.display=name==="venta"?"block":"none";
+  document.getElementById("bnav").style.display=name==="cobro"?"none":"flex";
+  if(name==="cierre") updCierre();
+}
+
+function showToast(msg,type=""){
+  const t=document.getElementById("toast");
+  t.textContent=msg; t.className="toast show"+(type?" "+type:"");
+  setTimeout(()=>t.classList.remove("show"),3000);
+}
+
+// ── INIT ──
+setFecha();
+fetch(API)
+  .then(r=>r.json())
+  .then(data=>{stock=data.stock||{}; renderGrid(); renderInventario();})
+  .catch(()=>{renderGrid(); renderInventario(); showToast("Sin conexión al servidor","err");});
+</script>
+</body>
+</html>
