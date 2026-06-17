@@ -14,7 +14,7 @@ document.addEventListener('touchend', function(e) {
 </script>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
-body { background: #f2f2f2; font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif; padding-bottom: 60px; touch-action: pan-x pan-y; }
+body { background: #f2f2f2; font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif; padding-bottom: 90px; touch-action: pan-x pan-y; }
 .header { background: #1a1a1a; padding: 52px 18px 18px; display: flex; justify-content: space-between; align-items: center; }
 .header-logo { width: 56px; height: 56px; object-fit: contain; flex-shrink: 0; }
 .header-right { text-align: right; }
@@ -84,7 +84,9 @@ body { background: #f2f2f2; font-family: -apple-system, BlinkMacSystemFont, 'Hel
 .diff-row .dl { color: #888; }
 .diff-row .dv { font-weight: 600; color: #111; }
 .diff-row .dv.red { color: #CC0000; }
-.btn-submit { display: block; width: calc(100% - 28px); margin: 12px 14px 0; padding: 17px; background: #CC0000; border: none; border-radius: 16px; font-size: 18px; font-weight: 700; color: #fff; cursor: pointer; font-family: inherit; touch-action: manipulation; }
+/* BOTÓN FIJO */
+.btn-submit-wrap { position: fixed; bottom: 0; left: 0; right: 0; background: linear-gradient(to top, #f2f2f2 70%, transparent); padding: 12px 14px 20px; z-index: 100; }
+.btn-submit { display: block; width: 100%; padding: 17px; background: #CC0000; border: none; border-radius: 16px; font-size: 18px; font-weight: 700; color: #fff; cursor: pointer; font-family: inherit; touch-action: manipulation; }
 .btn-submit:active { opacity: 0.85; }
 .btn-submit:disabled { background: #ccc; cursor: not-allowed; }
 .loading { text-align: center; padding: 60px 20px; color: #999; font-size: 16px; }
@@ -118,6 +120,11 @@ body { background: #f2f2f2; font-family: -apple-system, BlinkMacSystemFont, 'Hel
   <div id="mercaderia-content"><div class="loading">Cargando...</div></div>
 </div>
 
+<!-- BOTÓN FIJO -->
+<div class="btn-submit-wrap" id="btn-wrap" style="display:none">
+  <button class="btn-submit" id="btn-enviar" onclick="enviarCierre()">Enviar cierre del dia</button>
+</div>
+
 <script>
 var SCRIPT_URL = "https://script.google.com/macros/s/AKfycby1l06F0BHWsJDC0zATu29aOMRRhCJash1uWIwupF1k4Vjg_KDwRiemU9SEDV0jPOOrRA/exec";
 
@@ -146,13 +153,15 @@ var meses = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","
 var hoy = new Date();
 document.getElementById("fecha-txt").textContent = dias[hoy.getDay()]+" "+hoy.getDate()+" de "+meses[hoy.getMonth()]+" "+hoy.getFullYear();
 
-function fmt(n) { return "\u20a1"+Math.round(n).toLocaleString("es-CR"); }
+function fmt(n) { return "₡"+Math.round(n).toLocaleString("es-CR"); }
 
 function switchTab(tab) {
   ["cierre","mercaderia"].forEach(function(t) {
     document.getElementById("tab-"+t).className = t===tab?"tab active":"tab inactive";
     document.getElementById("panel-"+t).className = t===tab?"panel active":"panel";
   });
+  var wrap = document.getElementById("btn-wrap");
+  if(wrap) wrap.style.display = tab==="cierre" ? "block" : "none";
 }
 
 function cambiar(key, delta) {
@@ -251,9 +260,9 @@ function renderCierre() {
     '<div class="total-row"><span class="tl">Efectivo</span><span class="tv" id="ef-display">₡0</span></div>'+
     '<div class="total-div"></div>'+
     '<div class="total-final"><span class="tl">Total ventas del dia</span><span class="tv" id="total-display">₡0</span></div></div>'+
-    '<div id="diff-section"></div>'+
-    '<button class="btn-submit" id="btn-enviar" onclick="enviarCierre()">Enviar cierre del dia</button>';
+    '<div id="diff-section"></div>';
   document.getElementById("cierre-content").innerHTML = html;
+  document.getElementById("btn-wrap").style.display = "block";
 }
 
 function renderMercaderia() {
@@ -335,6 +344,7 @@ function enviarCierre() {
     if (res.ok) {
       document.getElementById("panel-cierre").innerHTML=
         '<div class="success"><div class="success-icon">✓</div><h2>Cierre enviado</h2><p>El reporte del dia fue registrado correctamente.<br>Buenas noches.</p></div>';
+      document.getElementById("btn-wrap").style.display="none";
     } else {
       btn.disabled=false;
       btn.textContent="Enviar cierre del dia";
