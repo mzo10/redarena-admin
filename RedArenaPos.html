@@ -355,11 +355,11 @@ body{background:var(--bg);font-family:var(--font);color:var(--white);min-height:
     <div class="slbl" style="padding-top:0">Cierre de caja</div>
     <div class="cinput-wrap">
       <label class="cinput-lbl">Total recibido por SINPE</label>
-      <input type="number" class="cinput" id="inp-sinpe" placeholder="0" inputmode="numeric" oninput="calcDiff()">
+      <input type="number" class="cinput" id="inp-sinpe" placeholder="0" inputmode="numeric" oninput="calcDiff();saveState()">
     </div>
     <div class="cinput-wrap">
       <label class="cinput-lbl">Total en efectivo en caja</label>
-      <input type="number" class="cinput" id="inp-efectivo" placeholder="0" inputmode="numeric" oninput="calcDiff()">
+      <input type="number" class="cinput" id="inp-efectivo" placeholder="0" inputmode="numeric" oninput="calcDiff();saveState()">
     </div>
     <div class="caja-summary">
       <div class="cs-row"><div class="cs-lbl">Ventas SINPE registradas</div><div class="cs-val" id="caja-sinpe">₡0</div></div>
@@ -372,7 +372,7 @@ body{background:var(--bg);font-family:var(--font);color:var(--white);min-height:
     </div>
     <div class="notas-wrap">
       <label class="cinput-lbl">Notas del día</label>
-      <textarea class="notas-ta" id="inp-notas" placeholder="Observaciones, incidencias..."></textarea>
+      <textarea class="notas-ta" id="inp-notas" placeholder="Observaciones, incidencias..." oninput="saveState()"></textarea>
     </div>
     <div class="total-card-cierre">
       <div><div class="tc-lbl">Ventas calculadas del día</div><div class="tc-amt" id="tc-total">₡0</div></div>
@@ -430,6 +430,59 @@ let gastoNum=0, gastosActivos=[], saveTimers={};
 PRODS.forEach(p=>qty[p.id]=0);
 
 const col=n=>"₡"+Math.round(n||0).toLocaleString("es-CR");
+
+
+// ── PERSISTENCIA LOCAL ──
+function saveState(){
+  try{
+    const state={
+      qty, nRes, nAdn, txns, ventasCount,
+      inpSinpe: document.getElementById("inp-sinpe")?document.getElementById("inp-sinpe").value:"",
+      inpEfectivo: document.getElementById("inp-efectivo")?document.getElementById("inp-efectivo").value:"",
+      inpNotas: document.getElementById("inp-notas")?document.getElementById("inp-notas").value:"",
+      fecha: new Date().toDateString()
+    };
+    localStorage.setItem("ra_pos_state", JSON.stringify(state));
+  }catch(e){}
+}
+
+function loadState(){
+  try{
+    const raw=localStorage.getItem("ra_pos_state");
+    if(!raw) return;
+    const state=JSON.parse(raw);
+    // Solo restaurar si es el mismo día
+    if(state.fecha !== new Date().toDateString()){
+      localStorage.removeItem("ra_pos_state");
+      return;
+    }
+    // Restaurar cantidades
+    if(state.qty) PRODS.forEach(p=>{ qty[p.id]=state.qty[p.id]||0; });
+    nRes=state.nRes||0;
+    nAdn=state.nAdn||0;
+    txns=state.txns||[];
+    ventasCount=state.ventasCount||0;
+    // Restaurar inputs de cierre
+    setTimeout(()=>{
+      const is=document.getElementById("inp-sinpe");
+      const ie=document.getElementById("inp-efectivo");
+      const no=document.getElementById("inp-notas");
+      if(is&&state.inpSinpe) is.value=state.inpSinpe;
+      if(ie&&state.inpEfectivo) ie.value=state.inpEfectivo;
+      if(no&&state.inpNotas) no.value=state.inpNotas;
+      // Restaurar chip
+      if(txns.length>0){
+        const cw=document.getElementById("chip-wrap");
+        if(cw) cw.innerHTML=`Punto de venta &nbsp;<span class="chip">✓ ${txns.length} registro${txns.length>1?"s":""}</span>`;
+      }
+      // Restaurar contadores de reservas
+      const rres=document.getElementById("rn-res");
+      const radn=document.getElementById("rn-adn");
+      if(rres){rres.textContent=nRes; rres.className="rctrl-num"+(nRes>0?" hot":"");}
+      if(radn){radn.textContent=nAdn; radn.className="rctrl-num"+(nAdn>0?" hot":"");}
+    },100);
+  }catch(e){}
+}
 
 // ── FECHA ──
 function setFecha(){
@@ -539,6 +592,7 @@ function accionCobrar(){
     document.getElementById("inp-sinpe").value=txns.reduce((a,t)=>a+t.sinpe,0)||"";
     document.getElementById("inp-efectivo").value=txns.reduce((a,t)=>a+t.efectivo,0)||"";
     updCierre();
+    saveState();
     showToast("✓ "+nAdn+" sesión ADN registrada","ok");
     return;
   }
@@ -711,6 +765,7 @@ function confirmarVenta(){
   document.getElementById("inp-efectivo").value=totEf||"";
 
   updCierre();
+  saveState();
   showToast(editandoTxnId!==null?"Venta actualizada":"✓ Venta registrada — "+col(total),"ok");
   goScreen("venta");
 }
@@ -749,6 +804,7 @@ function eliminarVenta(id){
   document.getElementById("inp-sinpe").value=totSinpe||"";
   document.getElementById("inp-efectivo").value=totEf||"";
   updCierre();
+  saveState();
   showToast("Venta eliminada","");
 }
 
@@ -876,10 +932,10 @@ function enviarCierre(){
   };
   document.getElementById("loading").classList.add("show");
   document.getElementById("enviar-btn").disabled=true;
-  fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(datos)})
+  fetch(API,{method:"POST",body:JSON.stringify(datos)})
   .then(r=>r.json()).then(res=>{
     document.getElementById("loading").classList.remove("show");
-    if(res.ok){showToast("✓ Cierre enviado","ok"); setTimeout(()=>document.getElementById("enviar-btn").disabled=false,4000);}
+    if(res.ok){localStorage.removeItem("ra_pos_state");showToast("✓ Cierre enviado","ok"); setTimeout(()=>document.getElementById("enviar-btn").disabled=false,4000);}
     else{showToast("Error: "+(res.error||"?"),"err"); document.getElementById("enviar-btn").disabled=false;}
   }).catch(()=>{
     document.getElementById("loading").classList.remove("show");
@@ -921,7 +977,7 @@ function chgStock(invId,d){
 }
 
 function guardarStock(invId,cantidad){
-  fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({accion:"actualizarStock",producto:invId,cantidad})})
+  fetch(API,{method:"POST",body:JSON.stringify({accion:"actualizarStock",producto:invId,cantidad})})
   .then(r=>r.json()).then(()=>{
     const st=document.getElementById("invstatus-"+invId);
     if(st){st.textContent="Guardado ✓"; setTimeout(()=>{if(st)st.textContent="";},2000);}
@@ -952,6 +1008,7 @@ function showToast(msg,type=""){
 
 // ── INIT ──
 setFecha();
+loadState();
 fetch(API)
   .then(r=>r.json())
   .then(data=>{stock=data.stock||{}; renderGrid(); renderInventario();})
